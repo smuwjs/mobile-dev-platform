@@ -1,9 +1,14 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.projects import router as projects_router
 from app.api.v1.router import router as api_v1_router
-from app.api.websocket import routes as websocket_routes
+
+# WebSocket manager
+from app.api.websocket import ConnectionManager
+
+ws_manager = ConnectionManager()
 
 
 @asynccontextmanager
@@ -29,8 +34,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# WebSocket endpoint
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for real-time updates."""
+    await ws_manager.connect(websocket, "anonymous")
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Echo back for now
+            await websocket.send_text(f"Received: {data}")
+    except Exception:
+        pass
+
+
+# Include API routes
+app.include_router(projects_router, prefix="/api/v1")
 app.include_router(api_v1_router)
-app.include_router(websocket_routes)
 
 
 @app.get("/health")
