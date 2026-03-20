@@ -10,7 +10,7 @@ import type {
 } from '@/types'
 
 const api = axios.create({
-  baseURL: '/dev-api',
+  baseURL: '/api',
   timeout: 10000,
 })
 
