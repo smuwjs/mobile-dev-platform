@@ -72,6 +72,19 @@ def update_task_status(
     elif status in (TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED):
         task["completed_at"] = now
 
+    # Broadcast update via WebSocket
+    try:
+        from app.api.websocket import broadcast_execution_update
+        broadcast_execution_update(
+            task_id=task.get("project_id", ""),
+            execution_id=task_id,
+            status=status,
+            result=result,
+            error=error,
+        )
+    except Exception:
+        pass
+
     return task
 
 

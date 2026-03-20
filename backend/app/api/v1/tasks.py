@@ -14,6 +14,15 @@ from app.services.executor import (
     TaskStatus,
 )
 
+
+def broadcast_task_update(task_id: str, task_data: dict):
+    """Broadcast task update via WebSocket."""
+    try:
+        from app.api.websocket import broadcast_task_update as ws_broadcast
+        ws_broadcast(task_id, task_data)
+    except Exception:
+        pass
+
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
@@ -136,6 +145,10 @@ async def create_task(task: TaskCreate):
     }
 
     _tasks_store[task_id] = new_task
+
+    # Broadcast task creation
+    broadcast_task_update(task_id, _task_to_response(new_task).model_dump())
+
     return _task_to_response(new_task)
 
 
@@ -175,6 +188,9 @@ async def update_task(task_id: str, task: TaskUpdate):
         existing[key] = value
 
     _tasks_store[task_id] = existing
+
+    # Broadcast task update
+    broadcast_task_update(task_id, _task_to_response(existing).model_dump())
 
     return _task_to_response(existing)
 
