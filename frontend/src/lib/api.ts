@@ -14,6 +14,43 @@ const api = axios.create({
   timeout: 10000,
 })
 
+// Request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('user')
+      window.location.href = '/dev/login'
+    }
+    return Promise.reject(error)
+  }
+)
+
+// Auth
+export async function login(username: string, password: string) {
+  const { data } = await api.post('/v1/auth/login', { username, password })
+  return data
+}
+
+export async function logout() {
+  await api.post('/v1/auth/logout')
+}
+
 // Dashboard
 export async function getDashboardStats(): Promise<DashboardStats> {
   const { data } = await api.get('/dashboard/stats')

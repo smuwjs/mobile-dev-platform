@@ -1,12 +1,16 @@
-import { Link, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   FolderKanban,
   ListTodo,
   Receipt,
   ChevronRight,
+  LogOut,
+  User,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
 const navItems = [
   { href: '/dev/', label: 'Dashboard', icon: LayoutDashboard },
@@ -15,8 +19,35 @@ const navItems = [
   { href: '/dev/costs', label: 'Costs', icon: Receipt },
 ]
 
+interface UserInfo {
+  id: string
+  username: string
+  email?: string
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
+  const navigate = useNavigate()
+  const [user, setUser] = useState<UserInfo | null>(null)
+
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token')
+    const userStr = localStorage.getItem('user')
+    if (token && userStr) {
+      try {
+        setUser(JSON.parse(userStr))
+      } catch {
+        setUser(null)
+      }
+    }
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('user')
+    setUser(null)
+    navigate('/dev/login')
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -57,7 +88,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="p-4 border-t">
-          <div className="text-xs text-muted-foreground">
+          {user ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <User className="h-4 w-4" />
+                <span className="font-medium">{user.username}</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <Link to="/dev/login">
+              <Button variant="outline" size="sm" className="w-full">
+                Login
+              </Button>
+            </Link>
+          )}
+          <div className="mt-4 text-xs text-muted-foreground">
             <p>Version 1.0.0</p>
             <p className="mt-1">Dev Environment</p>
           </div>

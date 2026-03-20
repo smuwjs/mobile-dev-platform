@@ -66,3 +66,9 @@ export interface ApiResponse<T> {
   page: number
   page_size: number
 }
+
+export interface User {
+  id: string
+  username: string
+  email?: string
+}
