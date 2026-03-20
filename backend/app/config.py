@@ -1,5 +1,6 @@
 """Application configuration using Pydantic Settings."""
 
+import os
 from functools import lru_cache
 from typing import Any
 
@@ -11,7 +12,7 @@ class DatabaseSettings(BaseSettings):
     """Database configuration."""
 
     url: str = Field(
-        default="postgresql+asyncpg://postgres:postgres@localhost:5432/mobile_dev_platform",
+        default=os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/mobile_dev_platform"),
         description="Async PostgreSQL database URL",
     )
     echo: bool = Field(default=False, description="Echo SQL queries")
@@ -38,7 +39,7 @@ class RedisSettings(BaseSettings):
     """Redis configuration."""
 
     url: str = Field(
-        default="redis://localhost:6379/0", description="Redis URL"
+        default=os.getenv("REDIS_URL", "redis://localhost:6379/0"), description="Redis URL"
     )
 
 
