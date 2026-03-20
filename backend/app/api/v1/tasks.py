@@ -3,8 +3,16 @@
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, BackgroundTasks
 from pydantic import BaseModel, Field
+
+from app.services.executor import (
+    create_task as create_execution_task,
+    execute_task,
+    get_task as get_execution_task,
+    update_task_status,
+    TaskStatus,
+)
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -185,8 +193,14 @@ async def delete_task(task_id: str):
 
 
 @router.post("/{task_id}/execute", response_model=TaskResponse)
-async def execute_task(task_id: str):
-    """Execute a task (calls Claude Code)."""
+async def execute_task_endpoint(
+    task_id: str,
+    background_tasks: BackgroundTasks,
+):
+    """Execute a task (calls Claude Code).
+
+    This endpoint creates an execution task and runs it in the background.
+    """
     if task_id not in _tasks_store:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -201,14 +215,55 @@ async def execute_task(task_id: str):
             detail="Task is already running",
         )
 
+    # Create execution task
+    execution_task_id = str(uuid.uuid4())
+    create_execution_task(
+        task_id=execution_task_id,
+        command="claude-code-clawdbot-skill",
+        project_id=task["project_id"],
+        requirement_id=task.get("requirement_id"),
+    )
+
     # Update task status to running
     task["status"] = "running"
     task["started_at"] = datetime.now()
     task["progress"] = 0
+    task["execution_task_id"] = execution_task_id
     _tasks_store[task_id] = task
 
-    # In production, this would trigger Claude Code execution
-    # For now, we simulate execution by updating progress
-    # The actual Claude Code integration would happen asynchronously
+    # Execute in background
+    background_tasks.add_task(
+        execute_task,
+        execution_task_id,
+        "claude-code-clawdbot-skill",
+    )
 
     return _task_to_response(task)
+
+
+@router.get("/{task_id}/execution", response_model=dict)
+async def get_task_execution(task_id: str):
+    """Get task execution status and result."""
+    if task_id not in _tasks_store:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Task {task_id} not found",
+        )
+
+    task = _tasks_store[task_id]
+    execution_task_id = task.get("execution_task_id")
+
+    if not execution_task_id:
+        return {"status": "not_started", "result": None}
+
+    execution = get_execution_task(execution_task_id)
+    if not execution:
+        return {"status": "not_found", "result": None}
+
+    return {
+        "status": execution["status"],
+        "result": execution["result"],
+        "error": execution.get("error"),
+        "started_at": execution.get("started_at"),
+        "completed_at": execution.get("completed_at"),
+    }

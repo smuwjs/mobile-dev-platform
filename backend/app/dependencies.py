@@ -5,10 +5,15 @@ from collections.abc import AsyncGenerator
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import async_session_factory
 from app.db.models import User
+from app.services.auth import decode_access_token, get_user_by_id
+
+# HTTP Bearer security scheme
+security = HTTPBearer()
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -29,35 +34,66 @@ DbSession = Annotated[AsyncSession, Depends(get_db)]
 
 
 async def get_current_user(
-    db: DbSession,
-    # In a real implementation, this would verify JWT token
-    # For now, we use a placeholder that would be replaced with actual auth
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
 ) -> User:
-    """Get current authenticated user.
+    """Get current authenticated user from JWT token.
 
-    This is a placeholder. In production, this would:
-    1. Extract JWT token from Authorization header
-    2. Verify the token signature and expiration
-    3. Look up the user from the database
-    4. Return the user object
+    Extracts JWT token from Authorization header, verifies it,
+    and returns the corresponding user.
 
     Raises HTTPException if not authenticated.
     """
-    # TODO: Implement actual JWT verification
-    # For now, raise unauthorized error
-    raise HTTPException(
+    credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Not authenticated",
+        detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+    token = credentials.credentials
+    payload = decode_access_token(token)
+
+    if payload is None:
+        raise credentials_exception
+
+    user_id: str | None = payload.get("sub")
+    if user_id is None:
+        raise credentials_exception
+
+    # Try to get user from in-memory store first
+    from app.services.auth import get_user_by_id as get_auth_user
+
+    user_data = get_auth_user(user_id)
+    if user_data is None:
+        raise credentials_exception
+
+    # Get user from database
+    async with async_session_factory() as session:
+        from sqlalchemy import select
+
+        result = await session.execute(select(User).where(User.id == uuid.UUID(user_id)))
+        user = result.scalar_one_or_none()
+
+        if user is None:
+            raise credentials_exception
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Inactive user",
+            )
+
+        return user
+
 
 async def get_current_user_optional(
-    db: DbSession,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)] = None,
 ) -> User | None:
     """Get current user if authenticated, None otherwise."""
+    if credentials is None:
+        return None
+
     try:
-        return await get_current_user(db)
+        return await get_current_user(credentials)
     except HTTPException:
         return None
 

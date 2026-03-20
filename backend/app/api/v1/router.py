@@ -7,10 +7,12 @@ from app.api.v1.requirements import router as requirements_router, _standalone_r
 from app.api.v1.tasks import router as tasks_router, _project_tasks_router
 from app.api.v1.costs import router as costs_router
 from app.api.v1.dashboard import router as dashboard_router
+from app.api.v1.auth import router as auth_router
 
 router = APIRouter(prefix="/api/v1")
 
 # Include sub-routers
+router.include_router(auth_router)
 router.include_router(projects_router)
 router.include_router(_project_tasks_router)
 router.include_router(requirements_router)

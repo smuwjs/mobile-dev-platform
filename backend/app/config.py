@@ -25,7 +25,7 @@ class DatabaseSettings(BaseSettings):
 class JWTSettings(BaseSettings):
     """JWT configuration."""
 
-    secret_key: str = Field(default="changeme-in-production", description="JWT secret key")
+    secret_key: str = Field(default="dev-secret-key", description="JWT secret key")
     algorithm: str = Field(default="HS256", description="JWT algorithm")
     access_token_expire_minutes: int = Field(
         default=30, ge=1, description="Access token expiration in minutes"
