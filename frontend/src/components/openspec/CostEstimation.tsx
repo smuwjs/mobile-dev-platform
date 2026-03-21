@@ -1,6 +1,5 @@
 import {
   DollarSign,
-  Clock,
   Cpu,
   Zap,
   TrendingUp,
@@ -35,8 +34,8 @@ interface CostBreakdown {
 export function CostEstimation({
   estimatedHours,
   complexity,
-  subRequirementsCount,
-  tasksCount,
+  subRequirementsCount: _subRequirementsCount,
+  tasksCount: _tasksCount,
   platform = 'React Native',
   techStack = 'mobile',
   budget,

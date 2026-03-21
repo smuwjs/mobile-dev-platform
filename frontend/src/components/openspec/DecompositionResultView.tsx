@@ -5,15 +5,12 @@ import {
   Clock,
   ChevronRight,
   GitBranch,
-  DollarSign,
   Layers,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
-import { Progress } from '@/components/ui/progress'
 import type { DecompositionResult } from '@/stores/requirementStore'
 
 interface DecompositionResultViewProps {

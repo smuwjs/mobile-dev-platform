@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react'
 import {
   CheckCircle2,
   Circle,
   Loader2,
-  Clock,
   TrendingUp,
+  Clock,
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
@@ -22,7 +21,6 @@ interface TaskStep {
 
 interface TaskProgressProps {
   steps: TaskStep[]
-  currentStep?: string
   totalProgress?: number
   showTimeline?: boolean
   compact?: boolean
@@ -51,7 +49,6 @@ const stepColors: Record<string, string> = {
 
 export function TaskProgress({
   steps,
-  currentStep,
   totalProgress,
   showTimeline = true,
   compact = false,

@@ -84,7 +84,7 @@ export function RealtimeLogViewer({
           id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
           task_id: taskId,
           timestamp: new Date().toISOString(),
-          level: message.level || 'info',
+          level: (message.level as 'info' | 'warning' | 'error') || 'info',
           message: message.message || '',
         }
         addLog(taskId, { level: newLog.level, message: newLog.message })

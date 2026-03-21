@@ -6,7 +6,6 @@ import {
   Clock,
   Edit2,
   Check,
-  X,
   ChevronUp,
   ChevronDown,
   AlertCircle,
@@ -24,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useDecompositionStore, type DecompositionResult } from '@/stores/requirementStore'
+import type { DecompositionResult } from '@/stores/requirementStore'
 
 interface TaskListEditorProps {
   result: DecompositionResult

@@ -13,12 +13,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { useDecompositionStore, type DecompositionResult } from '@/stores/requirementStore'
+import { useDecompositionStore } from '@/stores/requirementStore'
 
 interface RequirementInputFormProps {
   projectId: string
   onDecompose: (requirementText: string, projectId: string) => Promise<void>
-  onResult?: (result: DecompositionResult) => void
 }
 
 const templateSuggestions = [
@@ -28,7 +27,7 @@ const templateSuggestions = [
   { label: '社交分享模块', text: '开发社交分享功能，支持图片/文字分享到主流社交平台，生成分享海报，集成裂变营销机制' },
 ]
 
-export function RequirementInputForm({ projectId, onDecompose, onResult }: RequirementInputFormProps) {
+export function RequirementInputForm({ projectId, onDecompose }: RequirementInputFormProps) {
   const [requirementText, setRequirementText] = useState('')
   const [title, setTitle] = useState('')
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium')
