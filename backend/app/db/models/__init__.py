@@ -3,6 +3,7 @@
 from app.db.models.base import Base, TimestampMixin, UUIDMixin
 from app.db.models.celery_task import CeleryTaskState
 from app.db.models.cost_record import CostRecord
+from app.db.models.alert import Alert, AlertType, AlertSeverity, AlertStatus
 from app.db.models.project import Project
 from app.db.models.project_membership import ProjectMembership
 from app.db.models.requirement import Requirement
@@ -18,6 +19,10 @@ __all__ = [
     "Requirement",
     "Task",
     "CostRecord",
+    "Alert",
+    "AlertType",
+    "AlertSeverity",
+    "AlertStatus",
     "ProjectMembership",
     "CeleryTaskState",
 ]
