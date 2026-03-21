@@ -6,6 +6,18 @@ import path from 'path'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   base: '/dev/',
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8002',
+        changeOrigin: true,
+      },
+      '/ws': {
+        target: 'ws://localhost:8002',
+        ws: true,
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
