@@ -294,7 +294,7 @@ export default function ProjectDetailPage() {
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <p className="text-muted-foreground">项目不存在</p>
         <Button variant="outline" asChild>
-          <Link to="/dev/projects">返回项目列表</Link>
+          <Link to="projects">返回项目列表</Link>
         </Button>
       </div>
     )
@@ -306,7 +306,7 @@ export default function ProjectDetailPage() {
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link to="/dev/projects">
+            <Link to="projects">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>

@@ -160,7 +160,7 @@ function TaskRow({ task }: { task: Task }) {
           <StatusIcon className="h-4 w-4 text-muted-foreground" />
           <div>
             <Link
-              to={`/dev/projects/${task.project_id}`}
+              to={`projects/${task.project_id}`}
               className="font-medium hover:underline"
             >
               {task.title}

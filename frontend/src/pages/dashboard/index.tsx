@@ -145,7 +145,7 @@ export default function DashboardPage() {
           <p className="text-muted-foreground mt-1">项目概览与统计</p>
         </div>
         <Button asChild>
-          <Link to="/dev/projects/new">
+          <Link to="projects/new">
             <Plus className="h-4 w-4 mr-2" />
             新建项目
           </Link>
@@ -207,19 +207,19 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="grid gap-3">
             <Button variant="outline" className="justify-start" asChild>
-              <Link to="/dev/projects">
+              <Link to="projects">
                 <FolderKanban className="h-4 w-4 mr-2" />
                 查看所有项目
               </Link>
             </Button>
             <Button variant="outline" className="justify-start" asChild>
-              <Link to="/dev/tasks">
+              <Link to="tasks">
                 <ListTodo className="h-4 w-4 mr-2" />
                 查看所有任务
               </Link>
             </Button>
             <Button variant="outline" className="justify-start" asChild>
-              <Link to="/dev/costs">
+              <Link to="costs">
                 <Receipt className="h-4 w-4 mr-2" />
                 成本分析
               </Link>

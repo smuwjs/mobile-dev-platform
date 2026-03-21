@@ -2,6 +2,7 @@ export interface Project {
   id: string
   name: string
   description: string
+  platform?: 'android' | 'ios' | 'harmony' | 'cross'
   status: 'planning' | 'in_progress' | 'completed' | 'suspended'
   created_at: string
   updated_at: string

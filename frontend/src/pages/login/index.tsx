@@ -35,7 +35,7 @@ export default function LoginPage() {
 
       if (data.access_token) {
         localStorage.setItem('auth_token', data.access_token)
-        navigate('/dev/')
+        navigate('')
       } else {
         throw new Error('No token received')
       }

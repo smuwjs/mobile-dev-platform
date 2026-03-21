@@ -111,7 +111,7 @@ function RequirementRow({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
-                <Link to={`/dev/requirements/${requirement.id}`}>查看详情</Link>
+                <Link to={`/requirements/${requirement.id}`}>查看详情</Link>
               </DropdownMenuItem>
               <DropdownMenuItem>编辑</DropdownMenuItem>
               <DropdownMenuItem className="text-destructive">删除</DropdownMenuItem>
@@ -324,10 +324,15 @@ export default function RequirementsPage() {
     setDecomposing(true)
     setDecompositionError(null)
 
+    const token = localStorage.getItem('auth_token')
+
     try {
       const response = await fetch('/api/v1/requirements/decompose', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           requirement_text: requirementText,
           project_id: selectedRequirement?.project_id || '1',

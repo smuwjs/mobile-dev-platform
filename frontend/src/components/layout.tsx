@@ -15,12 +15,12 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 const navItems = [
-  { href: '/dev/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/dev/projects', label: 'Projects', icon: FolderKanban },
-  { href: '/dev/requirements', label: 'Requirements', icon: Sparkles },
-  { href: '/dev/tasks', label: 'Tasks', icon: ListTodo },
-  { href: '/dev/costs', label: 'Costs', icon: Receipt },
-  { href: '/dev/estimation', label: 'Estimation', icon: Settings },
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/projects', label: 'Projects', icon: FolderKanban },
+  { href: '/requirements', label: 'Requirements', icon: Sparkles },
+  { href: '/tasks', label: 'Tasks', icon: ListTodo },
+  { href: '/costs', label: 'Costs', icon: Receipt },
+  { href: '/estimation', label: 'Estimation', icon: Settings },
 ]
 
 interface UserInfo {
@@ -50,7 +50,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('auth_token')
     localStorage.removeItem('user')
     setUser(null)
-    navigate('/dev/login')
+    navigate('/login')
   }
 
   return (
@@ -66,8 +66,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <ul className="space-y-1">
             {navItems.map((item) => {
               const isActive =
-                item.href === '/dev/'
-                  ? location.pathname === '/dev/' || location.pathname === '/dev'
+                item.href === ''
+                  ? location.pathname === '' || location.pathname === '/dev'
                   : location.pathname.startsWith(item.href)
 
               return (
@@ -109,7 +109,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </Button>
             </div>
           ) : (
-            <Link to="/dev/login">
+            <Link to="/login">
               <Button variant="outline" size="sm" className="w-full">
                 Login
               </Button>

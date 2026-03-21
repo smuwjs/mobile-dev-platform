@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { createProject } from '@/lib/api'
 import { Plus, Search, MoreHorizontal, FolderKanban } from 'lucide-react'
 import {
   Card,
@@ -52,7 +53,8 @@ const mockProjects: Project[] = [
     id: '1',
     name: '电商 App v2.0',
     description: '全新设计的电商移动应用',
-    status: 'in_progress',
+    platform: 'android',
+  status: 'in_progress',
     created_at: '2024-01-15T08:00:00Z',
     updated_at: '2024-03-18T10:30:00Z',
     member_count: 5,
@@ -63,7 +65,8 @@ const mockProjects: Project[] = [
     id: '2',
     name: '社交 App',
     description: '新一代社交平台应用',
-    status: 'in_progress',
+    platform: 'android',
+  status: 'in_progress',
     created_at: '2024-02-01T08:00:00Z',
     updated_at: '2024-03-17T14:20:00Z',
     member_count: 8,
@@ -74,7 +77,8 @@ const mockProjects: Project[] = [
     id: '3',
     name: '企业管理系统',
     description: '企业内部管理系统',
-    status: 'completed',
+    platform: 'ios',
+  status: 'completed',
     created_at: '2023-11-10T08:00:00Z',
     updated_at: '2024-03-15T16:00:00Z',
     member_count: 12,
@@ -85,7 +89,8 @@ const mockProjects: Project[] = [
     id: '4',
     name: '在线教育平台',
     description: 'K12 在线教育应用',
-    status: 'planning',
+    platform: 'cross',
+  status: 'planning',
     created_at: '2024-03-01T08:00:00Z',
     updated_at: '2024-03-16T09:00:00Z',
     member_count: 3,
@@ -109,17 +114,27 @@ const statusLabels: Record<Project['status'], string> = {
 }
 
 function CreateProjectDialog() {
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [platform, setPlatform] = useState('android')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Call API to create project
-    console.log('Create project:', { name, description })
-    setOpen(false)
-    setName('')
-    setDescription('')
+    setLoading(true)
+    try {
+      const project = await createProject({ name, description, platform: platform as 'android' | 'ios' | 'harmony' | 'cross' })
+      setOpen(false)
+      setName('')
+      setDescription('')
+      navigate(`/projects/${project.id}`)
+    } catch (error) {
+      console.error('Failed to create project:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -159,9 +174,25 @@ function CreateProjectDialog() {
                 rows={3}
               />
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="platform">平台</Label>
+              <Select value={platform} onValueChange={setPlatform}>
+                <SelectTrigger>
+                  <SelectValue placeholder="选择平台" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="android">Android</SelectItem>
+                  <SelectItem value="ios">iOS</SelectItem>
+                  <SelectItem value="harmony">HarmonyOS</SelectItem>
+                  <SelectItem value="cross">跨平台</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
-            <Button type="submit">创建项目</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? '创建中...' : '创建项目'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -179,7 +210,7 @@ function ProjectRow({ project }: { project: Project }) {
           </div>
           <div>
             <Link
-              to={`/dev/projects/${project.id}`}
+              to={`/projects/${project.id}`}
               className="font-medium hover:underline"
             >
               {project.name}
@@ -224,7 +255,7 @@ function ProjectRow({ project }: { project: Project }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link to={`/dev/projects/${project.id}`}>查看详情</Link>
+              <Link to={`projects/${project.id}`}>查看详情</Link>
             </DropdownMenuItem>
             <DropdownMenuItem>编辑项目</DropdownMenuItem>
             <DropdownMenuItem className="text-destructive">
