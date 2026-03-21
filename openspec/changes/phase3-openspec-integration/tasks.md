@@ -8,12 +8,12 @@
 
 ### 1. OpenSpec 集成
 
-- [ ] 1. 创建 OpenSpec 服务层 (`app/services/openspec.py`)
-- [ ] 2. 实现 `generate_proposal()` - 生成需求提案
-- [ ] 3. 实现 `generate_design()` - 生成技术架构设计
-- [ ] 4. 实现 `generate_specs()` - 生成功能规范拆解
-- [ ] 5. 实现 `generate_tasks()` - 生成实现任务清单
-- [ ] 6. 创建 OpenSpec API 端点 (`/api/v1/openspec/*`)
+- [x] 1. 创建 OpenSpec 服务层 (`app/services/openspec.py`)
+- [x] 2. 实现 `generate_proposal()` - 生成需求提案
+- [x] 3. 实现 `generate_design()` - 生成技术架构设计
+- [x] 4. 实现 `generate_specs()` - 生成功能规范拆解
+- [x] 5. 实现 `generate_tasks()` - 生成实现任务清单
+- [x] 6. 创建 OpenSpec API 端点 (`/api/v1/openspec/*`)
 - [ ] 7. 添加 OpenAPI 文档集成
 
 ### 2. Claude Code 执行器
@@ -35,18 +35,18 @@
 
 ### 4. 成本量化模型
 
-- [ ] 19. 创建成本计算服务 (`app/services/cost_calculator.py`)
-- [ ] 20. 实现时间预估算法
-- [ ] 21. 实现 Token 预估算法
-- [ ] 22. 实现成本计算逻辑
-- [ ] 23. 创建成本记录模型与 API
+- [x] 19. 创建成本计算服务 (`app/services/cost_calculator.py`)
+- [x] 20. 实现时间预估算法
+- [x] 21. 实现 Token 预估算法
+- [x] 22. 实现成本计算逻辑
+- [x] 23. 创建成本记录模型与 API
 
 ### 5. 数据模型扩展
 
-- [ ] 24. 扩展 Projects 表（添加 platform, tech_stack, architecture 等字段）
-- [ ] 25. 扩展 Tasks 表（添加 proposal, design, specs, tasks 等 JSON 字段）
-- [ ] 26. 创建 TaskLogs 表（任务执行日志）
-- [ ] 27. 创建 Metrics 表（量化数据记录）
+- [x] 24. 扩展 Projects 表（添加 platform, tech_stack, architecture 等字段）
+- [x] 25. 扩展 Tasks 表（添加 proposal, design, specs, tasks 等 JSON 字段）
+- [x] 26. 创建 TaskLogs 表（任务执行日志）
+- [x] 27. 创建 Metrics 表（量化数据记录）
 
 ## 前端任务
 
