@@ -82,6 +82,22 @@ class Task(Base, UUIDMixin, TimestampMixin):
         default=0,
         nullable=False,
     )
+    proposal: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+    design: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+    specs: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+    tasks: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
     metadata_: Mapped[dict | None] = mapped_column(
         "metadata",
         JSON,
@@ -104,6 +120,16 @@ class Task(Base, UUIDMixin, TimestampMixin):
     )
     celery_task_states: Mapped[list["CeleryTaskState"]] = relationship(
         "CeleryTaskState",
+        back_populates="task",
+        cascade="all, delete-orphan",
+    )
+    task_logs: Mapped[list["TaskLog"]] = relationship(
+        "TaskLog",
+        back_populates="task",
+        cascade="all, delete-orphan",
+    )
+    metrics: Mapped[list["Metric"]] = relationship(
+        "Metric",
         back_populates="task",
         cascade="all, delete-orphan",
     )

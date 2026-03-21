@@ -37,6 +37,14 @@ class Project(Base, UUIDMixin, TimestampMixin):
         String(500),
         nullable=True,
     )
+    tech_stack: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+    architecture: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
     environment_variables: Mapped[dict | None] = mapped_column(
         JSON,
         nullable=True,
@@ -81,6 +89,11 @@ class Project(Base, UUIDMixin, TimestampMixin):
     )
     celery_task_states: Mapped[list["CeleryTaskState"]] = relationship(
         "CeleryTaskState",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
+    metrics: Mapped[list["Metric"]] = relationship(
+        "Metric",
         back_populates="project",
         cascade="all, delete-orphan",
     )
