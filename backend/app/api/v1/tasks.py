@@ -1,16 +1,15 @@
 """Tasks API endpoints with full CRUD operations."""
 
-import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Query, status, BackgroundTasks
 from pydantic import BaseModel, Field
 
+from app.services.task import task_service
 from app.services.executor import (
     create_task as create_execution_task,
     execute_task,
     get_task as get_execution_task,
-    update_task_status,
     TaskStatus,
 )
 
@@ -22,6 +21,7 @@ def broadcast_task_update(task_id: str, task_data: dict):
         ws_broadcast(task_id, task_data)
     except Exception:
         pass
+
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -71,10 +71,6 @@ class PaginatedResponse(BaseModel):
     page_size: int
 
 
-# In-memory storage
-_tasks_store: dict[str, dict] = {}
-
-
 def _task_to_response(task: dict) -> TaskResponse:
     """Convert task dict to response model."""
     return TaskResponse(
@@ -104,20 +100,15 @@ async def list_project_tasks(
     status_filter: str | None = Query(None, description="Filter by status"),
 ):
     """List all tasks for a project."""
-    all_tasks = [
-        t for t in _tasks_store.values() if t.get("project_id") == project_id
-    ]
-
-    if status_filter:
-        all_tasks = [t for t in all_tasks if t.get("status") == status_filter]
-
-    total = len(all_tasks)
-    start = (page - 1) * page_size
-    end = start + page_size
-    paginated = all_tasks[start:end]
+    tasks, total = task_service.get_tasks(
+        project_id=project_id,
+        status_filter=status_filter,
+        page=page,
+        page_size=page_size,
+    )
 
     return PaginatedResponse(
-        items=[_task_to_response(t) for t in paginated],
+        items=[_task_to_response(t) for t in tasks],
         total=total,
         page=page,
         page_size=page_size,
@@ -127,27 +118,18 @@ async def list_project_tasks(
 @router.post("/", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 async def create_task(task: TaskCreate):
     """Create a new task."""
-    now = datetime.now()
-    task_id = str(uuid.uuid4())
-
-    new_task = {
-        "id": task_id,
-        "project_id": task.project_id,
-        "requirement_id": task.requirement_id,
-        "title": task.title,
-        "description": task.description,
-        "status": task.status,
-        "progress": task.progress,
-        "created_by": task.created_by,
-        "created_at": now,
-        "started_at": None,
-        "completed_at": None,
-    }
-
-    _tasks_store[task_id] = new_task
+    new_task = task_service.create_task(
+        title=task.title,
+        project_id=task.project_id,
+        description=task.description,
+        requirement_id=task.requirement_id,
+        status=task.status,
+        progress=task.progress,
+        created_by=task.created_by,
+    )
 
     # Broadcast task creation
-    broadcast_task_update(task_id, _task_to_response(new_task).model_dump())
+    broadcast_task_update(new_task["id"], _task_to_response(new_task).model_dump())
 
     return _task_to_response(new_task)
 
@@ -155,56 +137,42 @@ async def create_task(task: TaskCreate):
 @router.get("/{task_id}", response_model=TaskResponse)
 async def get_task(task_id: str):
     """Get task by ID."""
-    if task_id not in _tasks_store:
+    task = task_service.get_task(task_id)
+    if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Task {task_id} not found",
         )
-    return _task_to_response(_tasks_store[task_id])
+    return _task_to_response(task)
 
 
 @router.put("/{task_id}", response_model=TaskResponse)
 async def update_task(task_id: str, task: TaskUpdate):
     """Update a task."""
-    if task_id not in _tasks_store:
+    update_data = task.model_dump(exclude_unset=True)
+    updated = task_service.update_task(task_id, **update_data)
+
+    if not updated:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Task {task_id} not found",
         )
 
-    existing = _tasks_store[task_id]
-    update_data = task.model_dump(exclude_unset=True)
-
-    # Handle status transitions
-    if "status" in update_data:
-        new_status = update_data["status"]
-        if new_status == "running" and existing.get("status") != "running":
-            existing["started_at"] = datetime.now()
-        elif new_status in ("completed", "failed") and existing.get("status") != new_status:
-            existing["completed_at"] = datetime.now()
-            existing["progress"] = 100 if new_status == "completed" else existing.get("progress", 0)
-
-    for key, value in update_data.items():
-        existing[key] = value
-
-    _tasks_store[task_id] = existing
-
     # Broadcast task update
-    broadcast_task_update(task_id, _task_to_response(existing).model_dump())
+    broadcast_task_update(task_id, _task_to_response(updated).model_dump())
 
-    return _task_to_response(existing)
+    return _task_to_response(updated)
 
 
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_task(task_id: str):
     """Delete a task."""
-    if task_id not in _tasks_store:
+    deleted = task_service.delete_task(task_id)
+    if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Task {task_id} not found",
         )
-
-    del _tasks_store[task_id]
     return None
 
 
@@ -217,13 +185,12 @@ async def execute_task_endpoint(
 
     This endpoint creates an execution task and runs it in the background.
     """
-    if task_id not in _tasks_store:
+    task = task_service.get_task(task_id)
+    if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Task {task_id} not found",
         )
-
-    task = _tasks_store[task_id]
 
     if task["status"] == "running":
         raise HTTPException(
@@ -232,7 +199,7 @@ async def execute_task_endpoint(
         )
 
     # Create execution task
-    execution_task_id = str(uuid.uuid4())
+    execution_task_id = str(task_id)  # Use task_id as execution_task_id for simplicity
     create_execution_task(
         task_id=execution_task_id,
         command="claude-code-clawdbot-skill",
@@ -240,12 +207,9 @@ async def execute_task_endpoint(
         requirement_id=task.get("requirement_id"),
     )
 
-    # Update task status to running
-    task["status"] = "running"
-    task["started_at"] = datetime.now()
-    task["progress"] = 0
-    task["execution_task_id"] = execution_task_id
-    _tasks_store[task_id] = task
+    # Update task status to running via service
+    task_service.set_execution(task_id, execution_task_id)
+    updated_task = task_service.get_task(task_id)
 
     # Execute in background
     background_tasks.add_task(
@@ -254,32 +218,20 @@ async def execute_task_endpoint(
         "claude-code-clawdbot-skill",
     )
 
-    return _task_to_response(task)
+    return _task_to_response(updated_task)
 
 
 @router.get("/{task_id}/execution", response_model=dict)
 async def get_task_execution(task_id: str):
     """Get task execution status and result."""
-    if task_id not in _tasks_store:
+    execution = task_service.get_execution(task_id)
+    if not execution:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Task {task_id} not found",
         )
+    return execution
 
-    task = _tasks_store[task_id]
-    execution_task_id = task.get("execution_task_id")
 
-    if not execution_task_id:
-        return {"status": "not_started", "result": None}
-
-    execution = get_execution_task(execution_task_id)
-    if not execution:
-        return {"status": "not_found", "result": None}
-
-    return {
-        "status": execution["status"],
-        "result": execution["result"],
-        "error": execution.get("error"),
-        "started_at": execution.get("started_at"),
-        "completed_at": execution.get("completed_at"),
-    }
+# Export for dashboard service access
+_tasks_store = task_service._store

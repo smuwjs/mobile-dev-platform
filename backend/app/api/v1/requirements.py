@@ -1,10 +1,11 @@
 """Requirements API endpoints with full CRUD operations."""
 
-import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
+
+from app.services.requirement import requirement_service
 
 router = APIRouter(prefix="/projects/{project_id}/requirements", tags=["requirements"])
 
@@ -46,10 +47,6 @@ class PaginatedResponse(BaseModel):
     page_size: int
 
 
-# In-memory storage
-_requirements_store: dict[str, dict] = {}
-
-
 def _requirement_to_response(requirement: dict) -> RequirementResponse:
     """Convert requirement dict to response model."""
     return RequirementResponse(
@@ -73,20 +70,15 @@ async def list_requirements(
     status_filter: str | None = Query(None, description="Filter by status"),
 ):
     """List all requirements for a project."""
-    all_requirements = [
-        r for r in _requirements_store.values() if r.get("project_id") == project_id
-    ]
-
-    if status_filter:
-        all_requirements = [r for r in all_requirements if r.get("status") == status_filter]
-
-    total = len(all_requirements)
-    start = (page - 1) * page_size
-    end = start + page_size
-    paginated = all_requirements[start:end]
+    requirements, total = requirement_service.get_requirements(
+        project_id=project_id,
+        status_filter=status_filter,
+        page=page,
+        page_size=page_size,
+    )
 
     return PaginatedResponse(
-        items=[_requirement_to_response(r) for r in paginated],
+        items=[_requirement_to_response(r) for r in requirements],
         total=total,
         page=page,
         page_size=page_size,
@@ -96,22 +88,14 @@ async def list_requirements(
 @router.post("/", response_model=RequirementResponse, status_code=status.HTTP_201_CREATED)
 async def create_requirement(project_id: str, requirement: RequirementCreate):
     """Create a new requirement for a project."""
-    now = datetime.now()
-    requirement_id = str(uuid.uuid4())
-
-    new_requirement = {
-        "id": requirement_id,
-        "project_id": project_id,
-        "title": requirement.title,
-        "description": requirement.description,
-        "priority": requirement.priority,
-        "status": requirement.status,
-        "created_by": requirement.created_by,
-        "created_at": now,
-        "updated_at": now,
-    }
-
-    _requirements_store[requirement_id] = new_requirement
+    new_requirement = requirement_service.create_requirement(
+        title=requirement.title,
+        project_id=project_id,
+        description=requirement.description,
+        priority=requirement.priority,
+        status=requirement.status,
+        created_by=requirement.created_by,
+    )
     return _requirement_to_response(new_requirement)
 
 
@@ -122,45 +106,39 @@ _standalone_requirements_router = APIRouter(prefix="/requirements", tags=["requi
 @_standalone_requirements_router.get("/{requirement_id}", response_model=RequirementResponse)
 async def get_requirement(requirement_id: str):
     """Get requirement by ID."""
-    if requirement_id not in _requirements_store:
+    requirement = requirement_service.get_requirement(requirement_id)
+    if not requirement:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Requirement {requirement_id} not found",
         )
-    return _requirement_to_response(_requirements_store[requirement_id])
+    return _requirement_to_response(requirement)
 
 
 @_standalone_requirements_router.put("/{requirement_id}", response_model=RequirementResponse)
 async def update_requirement(requirement_id: str, requirement: RequirementUpdate):
     """Update a requirement."""
-    if requirement_id not in _requirements_store:
+    update_data = requirement.model_dump(exclude_unset=True)
+    updated = requirement_service.update_requirement(requirement_id, **update_data)
+
+    if not updated:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Requirement {requirement_id} not found",
         )
 
-    existing = _requirements_store[requirement_id]
-    update_data = requirement.model_dump(exclude_unset=True)
-
-    for key, value in update_data.items():
-        existing[key] = value
-
-    existing["updated_at"] = datetime.now()
-    _requirements_store[requirement_id] = existing
-
-    return _requirement_to_response(existing)
+    return _requirement_to_response(updated)
 
 
 @_standalone_requirements_router.delete("/{requirement_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_requirement(requirement_id: str):
     """Delete a requirement."""
-    if requirement_id not in _requirements_store:
+    deleted = requirement_service.delete_requirement(requirement_id)
+    if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Requirement {requirement_id} not found",
         )
-
-    del _requirements_store[requirement_id]
     return None
 
 
@@ -231,13 +209,12 @@ async def decompose_existing_requirement(requirement_id: str):
 
     Uses the existing requirement's text to generate sub-requirements and tasks.
     """
-    if requirement_id not in _requirements_store:
+    requirement = requirement_service.get_requirement(requirement_id)
+    if not requirement:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Requirement {requirement_id} not found",
         )
-
-    requirement = _requirements_store[requirement_id]
 
     from app.services.requirement_analysis import requirement_analysis_service
 
@@ -280,13 +257,12 @@ async def validate_requirement(requirement_id: str):
     Returns validation results including any detected conflicts,
     warnings, and suggestions for improvement.
     """
-    if requirement_id not in _requirements_store:
+    requirement = requirement_service.get_requirement(requirement_id)
+    if not requirement:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Requirement {requirement_id} not found",
         )
-
-    requirement = _requirements_store[requirement_id]
 
     from app.services.requirement_analysis import requirement_analysis_service
 
@@ -408,3 +384,7 @@ async def list_celery_tasks(
         )
         for s in states
     ]
+
+
+# Export for dashboard service access
+_requirements_store = requirement_service._store
