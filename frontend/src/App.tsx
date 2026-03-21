@@ -16,14 +16,14 @@ function App() {
     <StrictMode>
       <BrowserRouter>
         <Routes>
-          <Route path="login" element={<LoginPage />} />
-          <Route path="" element={<Layout><DashboardPage /></Layout>} />
-          <Route path="projects" element={<Layout><ProjectsPage /></Layout>} />
-          <Route path="projects/:id" element={<Layout><ProjectDetailPage /></Layout>} />
-          <Route path="tasks" element={<Layout><TasksPage /></Layout>} />
-          <Route path="task-board" element={<Layout><TaskBoardPage /></Layout>} />
-          <Route path="costs" element={<Layout><CostsPage /></Layout>} />
-          <Route path="requirements" element={<Layout><RequirementsPage /></Layout>} />
+          <Route path="/dev/login" element={<LoginPage />} />
+          <Route path="/dev/" element={<Layout><DashboardPage /></Layout>} />
+          <Route path="/dev/projects" element={<Layout><ProjectsPage /></Layout>} />
+          <Route path="/dev/projects/:id" element={<Layout><ProjectDetailPage /></Layout>} />
+          <Route path="/dev/tasks" element={<Layout><TasksPage /></Layout>} />
+          <Route path="/dev/task-board" element={<Layout><TaskBoardPage /></Layout>} />
+          <Route path="/dev/costs" element={<Layout><CostsPage /></Layout>} />
+          <Route path="/dev/requirements" element={<Layout><RequirementsPage /></Layout>} />
         </Routes>
       </BrowserRouter>
     </StrictMode>
