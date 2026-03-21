@@ -18,7 +18,6 @@ class TestTaskService:
             title="Test Task",
             project_id="project-1",
             description="A test task",
-            priority="high",
             status="pending",
             progress=0,
             created_by="test-user",
