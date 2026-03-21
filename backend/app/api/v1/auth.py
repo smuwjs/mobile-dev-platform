@@ -34,12 +34,21 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
-def create_token(user_id: str) -> str:
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+def create_token(user_id: str, token_type: str = "access") -> str:
     """Create JWT token."""
+    if token_type == "access":
+        exp = datetime.utcnow() + timedelta(minutes=30)
+    else:
+        exp = datetime.utcnow() + timedelta(days=7)
     payload = {
         "sub": user_id,
-        "exp": datetime.utcnow() + timedelta(days=7),
+        "exp": exp,
         "iat": datetime.utcnow(),
+        "type": token_type,
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
@@ -60,7 +69,7 @@ def register(user: UserCreate):
     """Register a new user."""
     if user.username in _users_db:
         raise HTTPException(status_code=400, detail="Username already exists")
-    
+
     user_id = secrets.token_urlsafe(8)
     _users_db[user.username] = {
         "id": user_id,
@@ -78,9 +87,24 @@ def login(credentials: UserLogin):
     user = _users_db.get(credentials.username)
     if not user or user["password"] != credentials.password:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
     token = create_token(user["id"])
     return TokenResponse(access_token=token)
+
+
+@router.post("/refresh", response_model=TokenResponse)
+def refresh_token(request: RefreshRequest):
+    """Refresh access token."""
+    payload = verify_token(request.refresh_token)
+    token_type = payload.get("type", "access")
+
+    # Only refresh tokens can be used to get new access tokens
+    if token_type != "refresh":
+        raise HTTPException(status_code=401, detail="Invalid token type for refresh")
+
+    user_id = payload.get("sub")
+    new_token = create_token(user_id, token_type="access")
+    return TokenResponse(access_token=new_token)
 
 
 @router.get("/me")
@@ -88,7 +112,7 @@ def get_me(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Get current user info."""
     payload = verify_token(credentials.credentials)
     user_id = payload.get("sub")
-    
+
     for user in _users_db.values():
         if user["id"] == user_id:
             return {

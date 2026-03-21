@@ -2,7 +2,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.projects import router as projects_router
 from app.api.v1.router import router as api_v1_router
 
 # WebSocket manager
@@ -49,7 +48,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 # Include API routes
-app.include_router(projects_router, prefix="/api/v1")
 app.include_router(api_v1_router)
 
 

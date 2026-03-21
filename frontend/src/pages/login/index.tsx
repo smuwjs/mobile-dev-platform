@@ -5,15 +5,6 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 
-interface LoginResponse {
-  token: string
-  user?: {
-    id: string
-    username: string
-    email?: string
-  }
-}
-
 export default function LoginPage() {
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
@@ -27,7 +18,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const response = await fetch('/dev-api/v1/auth/login', {
+      const response = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,13 +31,10 @@ export default function LoginPage() {
         throw new Error(data.detail || 'Login failed')
       }
 
-      const data: LoginResponse = await response.json()
+      const data = await response.json()
 
-      if (data.token) {
-        localStorage.setItem('auth_token', data.token)
-        if (data.user) {
-          localStorage.setItem('user', JSON.stringify(data.user))
-        }
+      if (data.access_token) {
+        localStorage.setItem('auth_token', data.access_token)
         navigate('/dev/')
       } else {
         throw new Error('No token received')

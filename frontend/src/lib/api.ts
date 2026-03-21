@@ -53,13 +53,21 @@ export async function logout() {
 
 // Dashboard
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const { data } = await api.get('/dashboard/stats')
-  return data
+  const { data } = await api.get('/v1/dashboard/stats')
+  // Transform backend response to frontend format
+  return {
+    total_projects: data.projects?.total ?? 0,
+    active_projects: data.projects?.active ?? 0,
+    total_tasks: data.tasks?.total ?? 0,
+    completed_tasks: data.tasks?.completed ?? 0,
+    total_cost: data.costs?.total_cost_usd ?? 0,
+    recent_activities: [],
+  }
 }
 
 export async function getRecentActivities(): Promise<Activity[]> {
-  const { data } = await api.get('/dashboard/activities')
-  return data.items || []
+  const { data } = await api.get('/v1/dashboard/activities')
+  return data.activities || []
 }
 
 // Projects
