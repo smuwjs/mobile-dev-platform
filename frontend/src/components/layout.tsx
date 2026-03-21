@@ -8,6 +8,8 @@ import {
   ChevronRight,
   LogOut,
   User,
+  Sparkles,
+  Settings,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -15,8 +17,10 @@ import { Button } from '@/components/ui/button'
 const navItems = [
   { href: '/dev/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dev/projects', label: 'Projects', icon: FolderKanban },
+  { href: '/dev/requirements', label: 'Requirements', icon: Sparkles },
   { href: '/dev/tasks', label: 'Tasks', icon: ListTodo },
   { href: '/dev/costs', label: 'Costs', icon: Receipt },
+  { href: '/dev/estimation', label: 'Estimation', icon: Settings },
 ]
 
 interface UserInfo {
