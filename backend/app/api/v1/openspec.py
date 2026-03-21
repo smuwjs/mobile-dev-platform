@@ -63,11 +63,25 @@ class DesignResponse(BaseModel):
     content: dict
 
 
+class SpecsRequest(BaseModel):
+    """Request schema for generating specs."""
+
+    project_id: str = Field(..., description="Project identifier")
+    design: dict = Field(..., description="Design document from generate_design")
+
+
 class SpecsResponse(BaseModel):
     """Response schema for specs generation."""
 
     specs: list[dict]
     count: int
+
+
+class TasksRequest(BaseModel):
+    """Request schema for generating tasks."""
+
+    project_id: str = Field(..., description="Project identifier")
+    specs: list[dict] = Field(..., description="List of specs from generate_specs")
 
 
 class TasksResponse(BaseModel):
