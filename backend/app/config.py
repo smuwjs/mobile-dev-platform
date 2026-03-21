@@ -43,6 +43,34 @@ class RedisSettings(BaseSettings):
     )
 
 
+class ClaudeAPISettings(BaseSettings):
+    """Claude API configuration."""
+
+    api_key: str = Field(
+        default=os.getenv("ANTHROPIC_API_KEY", ""),
+        description="Anthropic Claude API key",
+    )
+    api_url: str = Field(
+        default=os.getenv("ANTHROPIC_API_URL", "https://api.anthropic.com"),
+        description="Anthropic Claude API URL",
+    )
+    max_retries: int = Field(default=3, ge=0, description="Max retry attempts")
+    timeout: int = Field(default=60, ge=1, description="Request timeout in seconds")
+
+
+class APIKeySettings(BaseSettings):
+    """API Key management configuration."""
+
+    encryption_key: str = Field(
+        default=os.getenv("API_KEY_ENCRYPTION_KEY", "dev-encryption-key-change-in-production"),
+        description="Encryption key for API keys",
+    )
+    default_rate_limit: int = Field(default=100, ge=1, description="Default rate limit per window")
+    default_rate_limit_window: int = Field(default=60, ge=1, description="Rate limit window in seconds")
+    max_keys_per_user: int = Field(default=10, ge=1, description="Max API keys per user")
+    max_keys_per_project: int = Field(default=5, ge=1, description="Max API keys per project")
+
+
 class Settings(BaseSettings):
     """Application settings."""
 
@@ -62,6 +90,8 @@ class Settings(BaseSettings):
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
     jwt: JWTSettings = Field(default_factory=JWTSettings)
     redis: RedisSettings = Field(default_factory=RedisSettings)
+    claude_api: ClaudeAPISettings = Field(default_factory=ClaudeAPISettings)
+    api_key: APIKeySettings = Field(default_factory=APIKeySettings)
 
 
 @lru_cache

@@ -1,0 +1,50 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash: npm, npx, node, python, pip, git, docker, docker-compose, tmux",
+      "Bash: curl, wget - for API calls",
+      "Bash: ls, cd, pwd, mkdir, rm, cp, mv - file operations",
+      "Bash: ps, kill, killall - process management",
+      "Read: /root/.openclaw/workspace/mobile-dev-platform/**",
+      "Write: /root/.openclaw/workspace/mobile-dev-platform/backend/**",
+      "Write: /root/.openclaw/workspace/mobile-dev-platform/frontend/src/**"
+    ],
+    "deny": [
+      "Bash: rm -rf /",
+      "Bash: dd, mkfs, fdisk - dangerous disk operations",
+      "Bash: *sudo*, *su* - privilege escalation",
+      "Write: /root/.openclaw/workspace/mobile-dev-platform/.env",
+      "Write: /root/.openclaw/workspace/mobile-dev-platform/**/credentials*",
+      "Write: /root/.openclaw/workspace/mobile-dev-platform/**/secrets*"
+    ]
+  },
+  "env": {
+    "OPENCLAW_API_URL": "http://localhost:8000",
+    "OPENCLAW_BACKEND_PORT": "8000",
+    "OPENCLAW_FRONTEND_PORT": "8080",
+    "DATABASE_URL": "postgresql+asyncpg://postgres:postgres@localhost:5434/mobile_dev_platform",
+    "REDIS_URL": "redis://localhost:6380/0"
+  },
+  "mcp": {
+    "enabled": false,
+    "servers": []
+  },
+  "execution": {
+    "maxConcurrentTasks": 3,
+    "taskTimeoutMinutes": 60,
+    "tmuxSessionPrefix": "claude_exec_",
+    "outputBufferLines": 1000,
+    "noOutputTimeoutSeconds": 300
+  },
+  "openspec": {
+    "changesDir": "/root/.openclaw/workspace/mobile-dev-platform/openspec/changes",
+    "autoGenerateTasks": true,
+    "requireApprovalBeforeApply": true
+  },
+  "costTracking": {
+    "enabled": true,
+    "trackTokenUsage": true,
+    "trackExecutionTime": true,
+    "alertThresholdPercent": 80
+  }
+}

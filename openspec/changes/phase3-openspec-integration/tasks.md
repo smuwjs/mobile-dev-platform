@@ -74,9 +74,9 @@
 
 ### 9. 环境配置
 
-- [ ] 39. 创建 OpenClaw Skill 配置文件
-- [ ] 40. 配置 Claude Code 运行环境
-- [ ] 41. 添加 API 密钥管理
+- [x] 39. 创建 OpenClaw Skill 配置文件
+- [x] 40. 配置 Claude Code 运行环境
+- [x] 41. 添加 API 密钥管理
 
 ## 验收标准
 

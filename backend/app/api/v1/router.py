@@ -11,6 +11,7 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.openspec import router as openspec_router
 from app.api.v1.exec import router as exec_router
 from app.api.v1.alerts import router as alerts_router
+from app.api.v1.api_keys import router as api_keys_router
 
 router = APIRouter(prefix="/api/v1")
 
@@ -26,3 +27,4 @@ router.include_router(dashboard_router)
 router.include_router(openspec_router)
 router.include_router(exec_router)
 router.include_router(alerts_router)
+router.include_router(api_keys_router)

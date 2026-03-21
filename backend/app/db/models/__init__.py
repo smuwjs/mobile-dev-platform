@@ -11,6 +11,7 @@ from app.db.models.task import Task
 from app.db.models.task_log import TaskLog
 from app.db.models.metric import Metric, MetricNames, MetricTypes
 from app.db.models.user import User
+from app.db.models.api_key import APIKey, generate_api_key, get_key_prefix
 
 __all__ = [
     "Base",
@@ -31,4 +32,7 @@ __all__ = [
     "Metric",
     "MetricNames",
     "MetricTypes",
+    "APIKey",
+    "generate_api_key",
+    "get_key_prefix",
 ]
