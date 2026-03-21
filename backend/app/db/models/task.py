@@ -102,6 +102,11 @@ class Task(Base, UUIDMixin, TimestampMixin):
         back_populates="task",
         cascade="all, delete-orphan",
     )
+    celery_task_states: Mapped[list["CeleryTaskState"]] = relationship(
+        "CeleryTaskState",
+        back_populates="task",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"<Task(id={self.id}, title={self.title}, status={self.status})>"

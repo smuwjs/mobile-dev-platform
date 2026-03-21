@@ -145,6 +145,122 @@ def broadcast_execution_update(
     )
 
 
+def broadcast_celery_task_update(
+    task_id: str,
+    state: str,
+    progress: int = 0,
+    result: Any = None,
+    error: str | None = None,
+    metadata: dict | None = None,
+):
+    """Broadcast Celery task state update.
+
+    Args:
+        task_id: Our internal task ID
+        state: Celery task state (PENDING, STARTED, SUCCESS, FAILURE, etc.)
+        progress: Progress percentage (0-100)
+        result: Task result if completed
+        error: Error message if failed
+        metadata: Additional metadata
+    """
+    asyncio.create_task(
+        manager.broadcast({
+            "type": "celery_task_update",
+            "task_id": task_id,
+            "state": state,
+            "progress": progress,
+            "result": result,
+            "error": error,
+            "metadata": metadata or {},
+        })
+    )
+
+
+def broadcast_celery_task_progress(
+    task_id: str,
+    progress: int,
+    state: str = "PROGRESS",
+):
+    """Broadcast Celery task progress update.
+
+    Args:
+        task_id: Our internal task ID
+        progress: Progress percentage (0-100)
+        state: Current state
+    """
+    asyncio.create_task(
+        manager.broadcast({
+            "type": "celery_task_progress",
+            "task_id": task_id,
+            "progress": progress,
+            "state": state,
+        })
+    )
+
+
+def broadcast_celery_task_completed(
+    task_id: str,
+    result: Any = None,
+    error: str | None = None,
+):
+    """Broadcast Celery task completion.
+
+    Args:
+        task_id: Our internal task ID
+        result: Task result
+        error: Error message if failed
+    """
+    asyncio.create_task(
+        manager.broadcast({
+            "type": "celery_task_completed",
+            "task_id": task_id,
+            "result": result,
+            "error": error,
+        })
+    )
+
+
+def broadcast_requirement_update(
+    requirement_id: str,
+    data: dict,
+):
+    """Broadcast requirement update.
+
+    Args:
+        requirement_id: Requirement ID
+        data: Requirement data
+    """
+    asyncio.create_task(
+        manager.broadcast({
+            "type": "requirement_update",
+            "requirement_id": requirement_id,
+            "data": data,
+        })
+    )
+
+
+def broadcast_decomposition_update(
+    requirement_id: str,
+    sub_requirements: list[dict],
+    tasks: list[dict],
+):
+    """Broadcast requirement decomposition results.
+
+    Args:
+        requirement_id: Parent requirement ID
+        sub_requirements: Generated sub-requirements
+        tasks: Generated tasks
+    """
+    asyncio.create_task(
+        manager.broadcast({
+            "type": "decomposition_update",
+            "requirement_id": requirement_id,
+            "sub_requirements": sub_requirements,
+            "tasks": tasks,
+        })
+    )
+
+
 routes = [
     WebSocketRoute("/ws", websocket_endpoint),
 ]

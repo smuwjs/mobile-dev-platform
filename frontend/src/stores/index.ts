@@ -1,1 +1,7 @@
 export { useAuthStore } from './authStore'
+export { useRequirementStore, useDecompositionStore } from './requirementStore'
+export { useTaskStore, useExecutionLogStore } from './taskStore'
+export type { DecompositionResult, SubRequirement } from './requirementStore'
+export type { CeleryTaskState, ExecutionLog } from './taskStore'
+export type { RequirementState } from './requirementStore'
+export type { TaskState, ExecutionLogState } from './taskStore'

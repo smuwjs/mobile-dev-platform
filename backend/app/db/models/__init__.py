@@ -1,6 +1,7 @@
 """Database models package."""
 
 from app.db.models.base import Base, TimestampMixin, UUIDMixin
+from app.db.models.celery_task import CeleryTaskState
 from app.db.models.cost_record import CostRecord
 from app.db.models.project import Project
 from app.db.models.project_membership import ProjectMembership
@@ -18,4 +19,5 @@ __all__ = [
     "Task",
     "CostRecord",
     "ProjectMembership",
+    "CeleryTaskState",
 ]

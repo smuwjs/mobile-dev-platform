@@ -88,6 +88,11 @@ class Requirement(Base, UUIDMixin, TimestampMixin):
         back_populates="requirement",
         cascade="all, delete-orphan",
     )
+    celery_task_states: Mapped[list["CeleryTaskState"]] = relationship(
+        "CeleryTaskState",
+        back_populates="requirement",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"<Requirement(id={self.id}, title={self.title})>"

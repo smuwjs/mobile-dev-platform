@@ -162,3 +162,249 @@ async def delete_requirement(requirement_id: str):
 
     del _requirements_store[requirement_id]
     return None
+
+
+# Decomposition API endpoints
+class DecomposeRequest(BaseModel):
+    """Request to decompose a requirement."""
+    requirement_text: str = Field(..., min_length=1, description="Requirement description to decompose")
+    project_id: str = Field(..., description="Project ID")
+    requirement_id: str | None = Field(None, description="Existing requirement ID if updating")
+
+
+class DecomposeResponse(BaseModel):
+    """Response from requirement decomposition."""
+    requirement_id: str
+    complexity: int
+    estimated_total_hours: float
+    sub_requirements: list[dict]
+    tasks: list[dict]
+    validation: dict
+
+
+@_standalone_requirements_router.post("/decompose", response_model=DecomposeResponse)
+async def decompose_requirement(decompose_req: DecomposeRequest):
+    """Decompose a requirement into sub-requirements and tasks.
+
+    This endpoint analyzes the requirement text and generates:
+    - Sub-requirements with priorities and estimates
+    - Actionable tasks with dependencies
+    - Validation results with any conflicts
+    """
+    from app.services.requirement_analysis import requirement_analysis_service
+
+    result = await requirement_analysis_service.analyze_requirement(
+        requirement_text=decompose_req.requirement_text,
+        project_id=decompose_req.project_id,
+        parent_id=decompose_req.requirement_id,
+    )
+
+    return DecomposeResponse(
+        requirement_id=result.requirement_id,
+        complexity=int(result.complexity),
+        estimated_total_hours=result.estimated_total_hours,
+        sub_requirements=[
+            {
+                "id": sr.id,
+                "title": sr.title,
+                "description": sr.description,
+                "priority": sr.priority,
+                "complexity": int(sr.complexity),
+                "estimated_hours": sr.estimated_hours,
+                "dependencies": sr.dependencies,
+            }
+            for sr in result.sub_requirements
+        ],
+        tasks=result.tasks,
+        validation={
+            "status": result.validation_result.status.value,
+            "conflicts": result.validation_result.conflicts,
+            "warnings": result.validation_result.warnings,
+            "suggestions": result.validation_result.suggestions,
+        },
+    )
+
+
+@_standalone_requirements_router.post("/{requirement_id}/decompose", response_model=DecomposeResponse)
+async def decompose_existing_requirement(requirement_id: str):
+    """Decompose an existing requirement.
+
+    Uses the existing requirement's text to generate sub-requirements and tasks.
+    """
+    if requirement_id not in _requirements_store:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Requirement {requirement_id} not found",
+        )
+
+    requirement = _requirements_store[requirement_id]
+
+    from app.services.requirement_analysis import requirement_analysis_service
+
+    result = await requirement_analysis_service.analyze_requirement(
+        requirement_text=requirement["description"] or requirement["title"],
+        project_id=requirement["project_id"],
+        parent_id=requirement_id,
+    )
+
+    return DecomposeResponse(
+        requirement_id=result.requirement_id,
+        complexity=int(result.complexity),
+        estimated_total_hours=result.estimated_total_hours,
+        sub_requirements=[
+            {
+                "id": sr.id,
+                "title": sr.title,
+                "description": sr.description,
+                "priority": sr.priority,
+                "complexity": int(sr.complexity),
+                "estimated_hours": sr.estimated_hours,
+                "dependencies": sr.dependencies,
+            }
+            for sr in result.sub_requirements
+        ],
+        tasks=result.tasks,
+        validation={
+            "status": result.validation_result.status.value,
+            "conflicts": result.validation_result.conflicts,
+            "warnings": result.validation_result.warnings,
+            "suggestions": result.validation_result.suggestions,
+        },
+    )
+
+
+@_standalone_requirements_router.post("/{requirement_id}/validate")
+async def validate_requirement(requirement_id: str):
+    """Validate a requirement for conflicts and consistency.
+
+    Returns validation results including any detected conflicts,
+    warnings, and suggestions for improvement.
+    """
+    if requirement_id not in _requirements_store:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Requirement {requirement_id} not found",
+        )
+
+    requirement = _requirements_store[requirement_id]
+
+    from app.services.requirement_analysis import requirement_analysis_service
+
+    result = await requirement_analysis_service.analyze_requirement(
+        requirement_text=requirement["description"] or requirement["title"],
+        project_id=requirement["project_id"],
+        parent_id=requirement_id,
+    )
+
+    return {
+        "requirement_id": requirement_id,
+        "status": result.validation_result.status.value,
+        "complexity": int(result.complexity),
+        "estimated_hours": result.estimated_total_hours,
+        "conflicts": result.validation_result.conflicts,
+        "warnings": result.validation_result.warnings,
+        "suggestions": result.validation_result.suggestions,
+    }
+
+
+# Celery task state API endpoints
+class CeleryTaskStateResponse(BaseModel):
+    """Response model for Celery task state."""
+    id: str
+    task_name: str | None
+    task_type: str | None
+    state: str
+    progress: int
+    result: dict | None
+    error: str | None
+    project_id: str | None
+    requirement_id: str | None
+    celery_task_id: str | None
+    created_at: datetime | None
+    started_at: datetime | None
+    completed_at: datetime | None
+
+
+@_standalone_requirements_router.get("/celery-tasks/{task_id}", response_model=CeleryTaskStateResponse)
+async def get_celery_task_state(task_id: str):
+    """Get the state of a Celery task.
+
+    Returns the current state, progress, and result of a Celery task.
+    """
+    from app.celery.tasks.base import get_task_state, get_async_result
+
+    # Try in-memory store first
+    state = get_task_state(task_id)
+
+    if state:
+        return CeleryTaskStateResponse(
+            id=state["id"],
+            task_name=state.get("task_name"),
+            task_type=state.get("task_type"),
+            state=state.get("state", "PENDING"),
+            progress=state.get("progress", 0),
+            result=state.get("result"),
+            error=state.get("error"),
+            project_id=state.get("project_id"),
+            requirement_id=state.get("requirement_id"),
+            celery_task_id=state.get("celery_task_id"),
+            created_at=state.get("created_at"),
+            started_at=state.get("started_at"),
+            completed_at=state.get("completed_at"),
+        )
+
+    # Try Celery result
+    async_result = get_async_result(task_id)
+    return CeleryTaskStateResponse(
+        id=task_id,
+        task_name=None,
+        task_type=None,
+        state=async_result.state,
+        progress=async_result.info.get("progress", 0) if async_result.info else 0,
+        result=async_result.result if async_result.ready() else None,
+        error=str(async_result.info) if async_result.failed() else None,
+        project_id=None,
+        requirement_id=None,
+        celery_task_id=task_id,
+        created_at=None,
+        started_at=None,
+        completed_at=None,
+    )
+
+
+@_standalone_requirements_router.get("/celery-tasks", response_model=list[CeleryTaskStateResponse])
+async def list_celery_tasks(
+    project_id: str | None = Query(None, description="Filter by project ID"),
+    requirement_id: str | None = Query(None, description="Filter by requirement ID"),
+    state: str | None = Query(None, description="Filter by state"),
+):
+    """List Celery task states.
+
+    Returns all task states with optional filtering by project, requirement, or state.
+    """
+    from app.celery.tasks.base import list_task_states
+
+    states = list_task_states(
+        project_id=project_id,
+        requirement_id=requirement_id,
+        state=state,
+    )
+
+    return [
+        CeleryTaskStateResponse(
+            id=s["id"],
+            task_name=s.get("task_name"),
+            task_type=s.get("task_type"),
+            state=s.get("state", "PENDING"),
+            progress=s.get("progress", 0),
+            result=s.get("result"),
+            error=s.get("error"),
+            project_id=s.get("project_id"),
+            requirement_id=s.get("requirement_id"),
+            celery_task_id=s.get("celery_task_id"),
+            created_at=s.get("created_at"),
+            started_at=s.get("started_at"),
+            completed_at=s.get("completed_at"),
+        )
+        for s in states
+    ]

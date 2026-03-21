@@ -9,6 +9,9 @@ import type {
   Activity,
 } from '@/types'
 
+export type { DecompositionResult, SubRequirement } from '@/stores/requirementStore'
+export type { CeleryTaskState } from '@/stores/taskStore'
+
 const api = axios.create({
   baseURL: '/api',
   timeout: 10000,
@@ -136,6 +139,121 @@ export async function getCostSummary(): Promise<{
   by_month: Array<{ month: string; amount: number }>
 }> {
   const { data } = await api.get('/v1/costs/summary')
+  return data
+}
+
+// Requirement Decomposition
+export interface DecomposeRequest {
+  requirement_text: string
+  project_id: string
+  requirement_id?: string
+}
+
+export interface DecomposeResponse {
+  requirement_id: string
+  complexity: number
+  estimated_total_hours: number
+  sub_requirements: Array<{
+    id: string
+    title: string
+    description: string
+    priority: number
+    complexity: number
+    estimated_hours: number
+    dependencies: string[]
+  }>
+  tasks: Array<{
+    id: string
+    title: string
+    description: string
+    requirement_id: string
+    project_id: string
+    priority: number
+    task_type: string
+    estimated_hours: number
+    sort_order: number
+    dependencies: string[]
+  }>
+  validation: {
+    status: 'valid' | 'has_warnings' | 'invalid'
+    conflicts: Array<{ type: string; severity: string; message: string }>
+    warnings: string[]
+    suggestions: string[]
+  }
+}
+
+export async function decomposeRequirement(req: DecomposeRequest): Promise<DecomposeResponse> {
+  const { data } = await api.post('/v1/requirements/decompose', req)
+  return data
+}
+
+export async function decomposeExistingRequirement(requirementId: string): Promise<DecomposeResponse> {
+  const { data } = await api.post(`/v1/requirements/${requirementId}/decompose`)
+  return data
+}
+
+export async function validateRequirement(requirementId: string): Promise<{
+  requirement_id: string
+  status: string
+  complexity: number
+  estimated_hours: number
+  conflicts: Array<{ type: string; severity: string; message: string }>
+  warnings: string[]
+  suggestions: string[]
+}> {
+  const { data } = await api.post(`/v1/requirements/${requirementId}/validate`)
+  return data
+}
+
+// Celery Task State
+export interface CeleryTaskStateResponse {
+  id: string
+  task_name: string | null
+  task_type: string | null
+  state: 'PENDING' | 'STARTED' | 'SUCCESS' | 'FAILURE' | 'REVOKED' | 'RETRY'
+  progress: number
+  result: unknown | null
+  error: string | null
+  project_id: string | null
+  requirement_id: string | null
+  celery_task_id: string | null
+  created_at: string | null
+  started_at: string | null
+  completed_at: string | null
+}
+
+export async function getCeleryTaskState(taskId: string): Promise<CeleryTaskStateResponse> {
+  const { data } = await api.get(`/v1/requirements/celery-tasks/${taskId}`)
+  return data
+}
+
+export async function listCeleryTasks(params?: {
+  project_id?: string
+  requirement_id?: string
+  state?: string
+}): Promise<CeleryTaskStateResponse[]> {
+  const { data } = await api.get('/v1/requirements/celery-tasks', { params })
+  return data
+}
+
+// Task Execution
+export async function executeTask(taskId: string): Promise<{
+  task_id: string
+  executor_task_id: string
+  status: string
+}> {
+  const { data } = await api.post(`/v1/tasks/${taskId}/execute`)
+  return data
+}
+
+export async function getTaskExecution(taskId: string): Promise<{
+  status: string
+  result: unknown
+  error: string | null
+  started_at: string | null
+  completed_at: string | null
+}> {
+  const { data } = await api.get(`/v1/tasks/${taskId}/execution`)
   return data
 }
 

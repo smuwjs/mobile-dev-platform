@@ -5,6 +5,11 @@ export type WebSocketMessageType =
   | 'task_progress'
   | 'task_completed'
   | 'execution_update'
+  | 'celery_task_update'
+  | 'celery_task_progress'
+  | 'celery_task_completed'
+  | 'requirement_update'
+  | 'decomposition_update'
   | 'pong'
   | 'subscribed'
   | 'error'
@@ -15,13 +20,18 @@ export interface WebSocketMessage {
   execution_id?: string
   progress?: number
   status?: string
+  state?: string
   result?: unknown
   error?: string
   data?: Partial<Task>
   message?: string
+  requirement_id?: string
+  sub_requirements?: unknown[]
+  tasks?: unknown[]
+  metadata?: Record<string, unknown>
 }
 
-type MessageHandler = (message: WebSocketMessage) => void
+export type MessageHandler = (message: WebSocketMessage) => void
 
 class WebSocketClient {
   private ws: WebSocket | null = null
