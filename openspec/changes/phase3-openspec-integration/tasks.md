@@ -18,12 +18,12 @@
 
 ### 2. Claude Code 执行器
 
-- [ ] 8. 创建 Claude Code 服务层 (`app/services/claude_executor.py`)
-- [ ] 9. 实现 tmux 会话管理（创建、暂停、恢复、终止）
-- [ ] 10. 实现任务步骤执行逻辑
-- [ ] 11. 实现输出捕获与解析
-- [ ] 12. 创建任务执行 API 端点 (`/api/v1/exec/*`)
-- [ ] 13. 实现执行状态管理
+- [x] 8. 创建 Claude Code 服务层 (`app/services/claude_executor.py`)
+- [x] 9. 实现 tmux 会话管理（创建、暂停、恢复、终止）
+- [x] 10. 实现任务步骤执行逻辑
+- [x] 11. 实现输出捕获与解析
+- [x] 12. 创建任务执行 API 端点 (`/api/v1/exec/*`)
+- [x] 13. 实现执行状态管理
 
 ### 3. 异常检测与告警
 
