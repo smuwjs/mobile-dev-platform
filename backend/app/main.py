@@ -20,9 +20,20 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Mobile Dev Platform API",
-    description="移动端开发管理平台 API",
+    description="移动端开发管理平台 API - 提供 OpenSpec 需求拆解、Claude Code 任务执行、成本量化评估等功能",
     version="1.0.0",
     lifespan=lifespan,
+    contact={
+        "name": "OpenClaw Team",
+        "url": "https://github.com/openclaw/mobile-dev-platform",
+    },
+    license_info={
+        "name": "MIT License",
+        "url": "https://opensource.org/licenses/MIT",
+    },
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
 
 app.add_middleware(

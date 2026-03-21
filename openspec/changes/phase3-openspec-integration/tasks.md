@@ -14,7 +14,7 @@
 - [x] 4. 实现 `generate_specs()` - 生成功能规范拆解
 - [x] 5. 实现 `generate_tasks()` - 生成实现任务清单
 - [x] 6. 创建 OpenSpec API 端点 (`/api/v1/openspec/*`)
-- [ ] 7. 添加 OpenAPI 文档集成
+- [x] 7. 添加 OpenAPI 文档集成
 
 ### 2. Claude Code 执行器
 
@@ -52,23 +52,23 @@
 
 ### 6. OpenSpec 拆解页面
 
-- [ ] 28. 创建需求输入表单组件
-- [ ] 29. 实现拆解结果展示页面
-- [ ] 30. 实现任务清单编辑功能
-- [ ] 31. 实现成本预估展示组件
+- [x] 28. 创建需求输入表单组件 (`RequirementInputForm.tsx`)
+- [x] 29. 实现拆解结果展示页面 (`DecompositionResultView.tsx`)
+- [x] 30. 实现任务清单编辑功能 (`TaskListEditor.tsx`)
+- [x] 31. 实现成本预估展示组件 (`CostEstimation.tsx`)
 
 ### 7. 任务执行页面
 
-- [ ] 32. 创建任务执行控制面板（开始/暂停/恢复/终止）
-- [ ] 33. 实现实时日志输出窗口
-- [ ] 34. 实现进度条组件
-- [ ] 35. 实现异常告警显示
+- [x] 32. 创建任务执行控制面板（开始/暂停/恢复/终止）(`ExecutionControlPanel.tsx`)
+- [x] 33. 实现实时日志输出窗口 (`RealtimeLogViewer.tsx`)
+- [x] 34. 实现进度条组件 (`TaskProgress.tsx`)
+- [x] 35. 实现异常告警显示 (`AlertDisplay.tsx`)
 
 ### 8. 成本统计页面
 
-- [ ] 36. 创建成本统计仪表盘
-- [ ] 37. 实现历史数据分析图表
-- [ ] 38. 实现预估模型配置页面
+- [x] 36. 创建成本统计仪表盘 (`pages/costs/index.tsx`)
+- [x] 37. 实现历史数据分析图表 (`pages/estimation/index.tsx`)
+- [x] 38. 实现预估模型配置页面 (`pages/estimation/index.tsx`)
 
 ## 部署任务
 
