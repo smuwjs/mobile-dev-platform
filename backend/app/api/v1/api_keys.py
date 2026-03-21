@@ -84,7 +84,7 @@ class APIKeyUpdateRequest(BaseModel):
 @router.post("/", response_model=APIKeyCreateResponse, status_code=status.HTTP_201_CREATED)
 async def create_api_key(
     request: APIKeyCreateRequest,
-    db: Annotated[AsyncSessionLocal, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Create a new API key.
@@ -123,7 +123,7 @@ async def create_api_key(
 
 @router.get("/", response_model=list[APIKeyResponse])
 async def list_api_keys(
-    db: Annotated[AsyncSessionLocal, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
     include_system: bool = False,
 ):
@@ -155,7 +155,7 @@ async def list_api_keys(
 @router.get("/{key_id}", response_model=APIKeyResponse)
 async def get_api_key(
     key_id: UUID,
-    db: Annotated[AsyncSessionLocal, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Get an API key by ID."""
@@ -191,7 +191,7 @@ async def get_api_key(
 async def update_api_key(
     key_id: UUID,
     request: APIKeyUpdateRequest,
-    db: Annotated[AsyncSessionLocal, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Update an API key."""
@@ -234,7 +234,7 @@ async def update_api_key(
 @router.delete("/{key_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_api_key(
     key_id: UUID,
-    db: Annotated[AsyncSessionLocal, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Delete an API key permanently."""
@@ -251,7 +251,7 @@ async def delete_api_key(
 @router.post("/{key_id}/deactivate", response_model=APIKeyResponse)
 async def deactivate_api_key(
     key_id: UUID,
-    db: Annotated[AsyncSessionLocal, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Deactivate an API key (can be reactivated later)."""
