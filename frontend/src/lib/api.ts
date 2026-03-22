@@ -257,4 +257,85 @@ export async function getTaskExecution(taskId: string): Promise<{
   return data
 }
 
+// Spec Driver APIs
+export interface SpecFramework {
+  id: string
+  name: string
+  description: string
+  url: string
+}
+
+export async function getSpecFrameworks(): Promise<{ frameworks: SpecFramework[] }> {
+  const { data } = await api.get('/v1/spec/frameworks')
+  return data
+}
+
+export async function specDecompose(req: {
+  requirement_text: string
+  project_id: string
+  requirement_id?: string
+}): Promise<DecomposeResponse> {
+  const { data } = await api.post('/v1/spec/decompose', req)
+  return data
+}
+
+export async function specValidate(projectId: string, tasks: any[]): Promise<{
+  status: string
+  conflicts: string[]
+  warnings: string[]
+  suggestions: string[]
+}> {
+  const { data } = await api.post('/v1/spec/validate', null, {
+    params: { project_id: projectId },
+    data: tasks,
+  })
+  return data
+}
+
+export async function specExecute(req: {
+  task_ids: string[]
+  project_id: string
+  parallel?: boolean
+}): Promise<{
+  executions: Array<{
+    task_id: string
+    status: string
+    progress: number
+    token_usage: { input: number; output: number; total: number }
+  }>
+  total_token_usage: { input: number; output: number; total: number }
+}> {
+  const { data } = await api.post('/v1/spec/execute', req)
+  return data
+}
+
+export async function specGenerateReport(projectId: string, requirementId: string): Promise<{
+  project_id: string
+  requirement_id: string
+  generated_at: string
+  summary: string
+  total_tasks: number
+  completed_tasks: number
+  failed_tasks: number
+  total_token_usage: { input: number; output: number; total: number }
+  sections: Array<{ title: string; content: string }>
+}> {
+  const { data } = await api.post('/v1/spec/report', {
+    project_id: projectId,
+    requirement_id: requirementId,
+  })
+  return data
+}
+
+export async function getExecutionStatus(taskId: string): Promise<{
+  task_id: string
+  status: string
+  progress: number
+  output: string
+  token_usage: { input: number; output: number; total: number }
+}> {
+  const { data } = await api.get(`/v1/spec/execution/${taskId}`)
+  return data
+}
+
 export default api

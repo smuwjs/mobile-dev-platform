@@ -65,6 +65,22 @@ class Project(Base, UUIDMixin, TimestampMixin):
         DateTime(timezone=True),
         nullable=True,
     )
+    # 本地开发目录
+    local_path: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+    # 规范驱动框架: openspec, speckit, superpowers
+    spec_framework: Mapped[str] = mapped_column(
+        String(50),
+        default="openspec",
+        nullable=False,
+    )
+    # 规范配置
+    spec_config: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
 
     # Relationships
     requirements: Mapped[list["Requirement"]] = relationship(

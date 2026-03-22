@@ -2,14 +2,11 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
   ArrowLeft,
-  Users,
-  ListTodo,
-  Calendar,
-  Plus,
-  MoreHorizontal,
-  CheckCircle2,
-  Circle,
-  Clock,
+  Settings,
+  Play,
+  FileText,
+  TreePine,
+  Zap,
 } from 'lucide-react'
 import {
   Card,
@@ -21,37 +18,21 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { getProject, getRequirements } from '@/lib/api'
+import {
+  getProject,
+  getRequirements,
+  getTasks,
+  specExecute,
+  specGenerateReport,
+  getSpecFrameworks,
+} from '@/lib/api'
 import { formatDate } from '@/lib/utils'
-import type { Project, Requirement, Task } from '@/types'
+import { RequirementTree } from '@/components/tree'
+import { TaskExecutionPanel, ReportViewer } from '@/components/execution'
+import type { Project, Requirement, Task, SpecFramework, ProjectReport } from '@/types'
 
-const mockProject: Project = {
-  id: '1',
-  name: '电商 App v2.0',
-  description: '全新设计的电商移动应用，包含商品展示、购物车、订单管理、支付等功能模块。目标是为用户提供流畅的移动购物体验。',
-  status: 'in_progress',
-  created_at: '2024-01-15T08:00:00Z',
-  updated_at: '2024-03-18T10:30:00Z',
-  member_count: 5,
-  task_count: 45,
-  progress: 75,
-}
-
+// Mock data for demo
 const mockRequirements: Requirement[] = [
   {
     id: '1',
@@ -74,34 +55,26 @@ const mockRequirements: Requirement[] = [
     updated_at: '2024-03-10T14:00:00Z',
   },
   {
-    id: '3',
+    id: '2-1',
     project_id: '1',
-    title: '购物车功能',
-    description: '添加购物车、数量修改、删除、结算',
+    parent_id: '2',
+    title: '首页推荐',
+    description: '轮播图、精选商品',
     status: 'active',
     priority: 'high',
-    created_at: '2024-02-01T08:00:00Z',
-    updated_at: '2024-03-15T16:00:00Z',
+    created_at: '2024-01-20T08:00:00Z',
+    updated_at: '2024-03-10T14:00:00Z',
   },
   {
-    id: '4',
+    id: '2-2',
     project_id: '1',
-    title: '订单管理',
-    description: '订单列表、订单详情、订单状态跟踪、取消订单',
+    parent_id: '2',
+    title: '商品分类',
+    description: '分类列表、筛选',
     status: 'draft',
     priority: 'medium',
-    created_at: '2024-02-15T08:00:00Z',
-    updated_at: '2024-02-15T08:00:00Z',
-  },
-  {
-    id: '5',
-    project_id: '1',
-    title: '支付模块',
-    description: '支付宝、微信支付集成',
-    status: 'draft',
-    priority: 'high',
-    created_at: '2024-02-20T08:00:00Z',
-    updated_at: '2024-02-20T08:00:00Z',
+    created_at: '2024-01-20T08:00:00Z',
+    updated_at: '2024-03-10T14:00:00Z',
   },
 ]
 
@@ -110,176 +83,124 @@ const mockTasks: Task[] = [
     id: '1',
     project_id: '1',
     title: '设计登录界面原型',
-    description: '完成登录注册页面的 UI 设计',
     status: 'completed',
-    assignee: '张三',
     priority: 'high',
     created_at: '2024-01-15T08:00:00Z',
     updated_at: '2024-01-20T10:00:00Z',
-    completed_at: '2024-01-20T10:00:00Z',
+    token_usage: { input: 5000, output: 2000, total: 7000 },
   },
   {
     id: '2',
     project_id: '1',
     title: '实现用户登录 API',
-    description: '对接后端登录接口',
     status: 'running',
-    assignee: '李四',
     priority: 'high',
+    progress: 60,
     created_at: '2024-01-20T08:00:00Z',
     updated_at: '2024-03-18T10:00:00Z',
-    started_at: '2024-03-15T08:00:00Z',
+    token_usage: { input: 3000, output: 1500, total: 4500 },
   },
   {
     id: '3',
     project_id: '1',
     title: '商品列表页面开发',
-    description: '完成商品展示列表页面',
     status: 'pending',
-    assignee: '王五',
     priority: 'medium',
     created_at: '2024-02-01T08:00:00Z',
     updated_at: '2024-02-01T08:00:00Z',
   },
 ]
 
-const statusColors: Record<Task['status'], string> = {
-  pending: 'bg-gray-100 text-gray-700',
-  running: 'bg-blue-100 text-blue-700',
-  completed: 'bg-green-100 text-green-700',
-  failed: 'bg-red-100 text-red-700',
-}
-
-const statusLabels: Record<Task['status'], string> = {
-  pending: '待开始',
-  running: '进行中',
-  completed: '已完成',
-  failed: '失败',
-}
-
-const priorityColors: Record<Task['priority'], string> = {
-  low: 'bg-gray-100 text-gray-600',
-  medium: 'bg-yellow-100 text-yellow-700',
-  high: 'bg-red-100 text-red-700',
-}
-
-const reqStatusColors: Record<Requirement['status'], string> = {
-  draft: 'bg-gray-100 text-gray-700',
-  active: 'bg-blue-100 text-blue-700',
-  completed: 'bg-green-100 text-green-700',
-  archived: 'bg-gray-100 text-gray-500',
-}
-
-function RequirementRow({ requirement }: { requirement: Requirement }) {
-  return (
-    <TableRow>
-      <TableCell>
-        <div>
-          <p className="font-medium">{requirement.title}</p>
-          <p className="text-sm text-muted-foreground line-clamp-1">
-            {requirement.description}
-          </p>
-        </div>
-      </TableCell>
-      <TableCell>
-        <Badge className={reqStatusColors[requirement.status]} variant="secondary">
-          {requirement.status === 'draft' ? '草稿' :
-           requirement.status === 'active' ? '进行中' :
-           requirement.status === 'completed' ? '已完成' : '已归档'}
-        </Badge>
-      </TableCell>
-      <TableCell>
-        <Badge className={priorityColors[requirement.priority]} variant="secondary">
-          {requirement.priority === 'low' ? '低' :
-           requirement.priority === 'medium' ? '中' : '高'}
-        </Badge>
-      </TableCell>
-      <TableCell className="text-muted-foreground">
-        {formatDate(requirement.updated_at)}
-      </TableCell>
-      <TableCell>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>查看详情</DropdownMenuItem>
-            <DropdownMenuItem>编辑</DropdownMenuItem>
-            <DropdownMenuItem>删除</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </TableCell>
-    </TableRow>
-  )
-}
-
-function TaskRow({ task }: { task: Task }) {
-  const StatusIcon = {
-    pending: Circle,
-    running: Clock,
-    completed: CheckCircle2,
-    failed: Circle,
-  }[task.status]
-
-  return (
-    <TableRow>
-      <TableCell>
-        <div className="flex items-center gap-3">
-          <StatusIcon className="h-4 w-4 text-muted-foreground" />
-          <div>
-            <p className="font-medium">{task.title}</p>
-            <p className="text-sm text-muted-foreground line-clamp-1">
-              {task.description}
-            </p>
-          </div>
-        </div>
-      </TableCell>
-      <TableCell>
-        <Badge className={statusColors[task.status]} variant="secondary">
-          {statusLabels[task.status]}
-        </Badge>
-      </TableCell>
-      <TableCell>
-        <Badge className={priorityColors[task.priority]} variant="secondary">
-          {task.priority === 'low' ? '低' : task.priority === 'medium' ? '中' : '高'}
-        </Badge>
-      </TableCell>
-      <TableCell className="text-muted-foreground">{task.assignee}</TableCell>
-      <TableCell className="text-muted-foreground">
-        {formatDate(task.updated_at)}
-      </TableCell>
-    </TableRow>
-  )
+const frameworkLabels: Record<string, string> = {
+  openspec: 'OpenSpec',
+  speckit: 'SpecKit',
+  superpowers: 'SuperPowers',
 }
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [project, setProject] = useState<Project | null>(null)
   const [requirements, setRequirements] = useState<Requirement[]>(mockRequirements)
-  const [tasks] = useState<Task[]>(mockTasks)
+  const [tasks, setTasks] = useState<Task[]>(mockTasks)
+  const [frameworks, setFrameworks] = useState<SpecFramework[]>([])
+  const [report, setReport] = useState<ProjectReport | null>(null)
   const [loading, setLoading] = useState(true)
+  const [executing, setExecuting] = useState(false)
+  const [reportLoading, setReportLoading] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
       if (!id) return
       try {
-        const data = await getProject(id)
-        setProject(data)
+        // Fetch project
+        const projectData = await getProject(id)
+        setProject(projectData)
+
+        // Fetch requirements
         const reqData = await getRequirements(id)
         if (reqData.items.length > 0) {
           setRequirements(reqData.items)
         }
-      } catch {
-        // Use mock data on error
-        setProject(mockProject)
+
+        // Fetch tasks
+        const taskData = await getTasks({ project_id: id })
+        if (taskData.items.length > 0) {
+          setTasks(taskData.items)
+        }
+
+        // Fetch frameworks
+        const fwData = await getSpecFrameworks()
+        setFrameworks(fwData.frameworks || [])
+      } catch (e) {
+        console.error(e)
       } finally {
         setLoading(false)
       }
     }
     fetchData()
   }, [id])
+
+  const handleExecuteTasks = async (taskIds: string[]) => {
+    if (!id) return
+    setExecuting(true)
+    try {
+      await specExecute({
+        task_ids: taskIds,
+        project_id: id,
+        parallel: true,
+      })
+      // Refresh tasks
+      const taskData = await getTasks({ project_id: id })
+      if (taskData.items.length > 0) {
+        setTasks(taskData.items)
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setExecuting(false)
+    }
+  }
+
+  const handleGenerateReport = async () => {
+    if (!id || requirements.length === 0) return
+    setReportLoading(true)
+    try {
+      const reportData = await specGenerateReport(id, requirements[0].id)
+      setReport(reportData)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setReportLoading(false)
+    }
+  }
+
+  const handleRefresh = async () => {
+    if (!id) return
+    const taskData = await getTasks({ project_id: id })
+    if (taskData.items.length > 0) {
+      setTasks(taskData.items)
+    }
+  }
 
   if (loading) {
     return (
@@ -294,7 +215,7 @@ export default function ProjectDetailPage() {
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <p className="text-muted-foreground">项目不存在</p>
         <Button variant="outline" asChild>
-          <Link to="projects">返回项目列表</Link>
+          <Link to="/projects">返回项目列表</Link>
         </Button>
       </div>
     )
@@ -306,18 +227,37 @@ export default function ProjectDetailPage() {
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link to="projects">
+            <Link to="/projects">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
           <div>
             <h1 className="text-3xl font-bold">{project.name}</h1>
             <p className="text-muted-foreground mt-1">{project.description}</p>
+            <div className="flex gap-2 mt-2">
+              <Badge variant="outline">{project.platform}</Badge>
+              {project.spec_framework && (
+                <Badge variant="secondary">
+                  {frameworkLabels[project.spec_framework] || project.spec_framework}
+                </Badge>
+              )}
+              {project.local_path && (
+                <Badge variant="outline" className="font-mono text-xs">
+                  {project.local_path}
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">编辑项目</Button>
-          <Button>新建任务</Button>
+          <Button variant="outline">
+            <Settings className="h-4 w-4 mr-2" />
+            项目配置
+          </Button>
+          <Button>
+            <Play className="h-4 w-4 mr-2" />
+            开始执行
+          </Button>
         </div>
       </div>
 
@@ -350,12 +290,11 @@ export default function ProjectDetailPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              成员数量
+              需求数量
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{project.member_count}</div>
+            <div className="text-2xl font-bold">{requirements.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -363,21 +302,22 @@ export default function ProjectDetailPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               任务数量
             </CardTitle>
-            <ListTodo className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{project.task_count}</div>
+            <div className="text-2xl font-bold">{tasks.length}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              更新时间
+              Token 消耗
             </CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Zap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatDate(project.updated_at)}</div>
+            <div className="text-2xl font-bold">
+              {tasks.reduce((acc, t) => acc + (t.token_usage?.total || 0), 0).toLocaleString()}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -395,81 +335,70 @@ export default function ProjectDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Tabs */}
-      <Tabs defaultValue="requirements" className="space-y-4">
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="tree" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="requirements">
-            需求列表 ({requirements.length})
+          <TabsTrigger value="tree" className="flex items-center gap-2">
+            <TreePine className="h-4 w-4" />
+            树状视图
           </TabsTrigger>
-          <TabsTrigger value="tasks">任务列表 ({tasks.length})</TabsTrigger>
+          <TabsTrigger value="execution" className="flex items-center gap-2">
+            <Play className="h-4 w-4" />
+            任务执行
+          </TabsTrigger>
+          <TabsTrigger value="report" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            完成报告
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="requirements">
+        <TabsContent value="tree">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>需求列表</CardTitle>
-                <CardDescription>项目需求与功能点</CardDescription>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>需求树状结构</CardTitle>
+                  <CardDescription>
+                    项目 → 需求 → 子需求 → 任务 的层级关系
+                  </CardDescription>
+                </div>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  新增需求
+                </Button>
               </div>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                新增需求
-              </Button>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[400px]">需求</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead>优先级</TableHead>
-                    <TableHead>更新时间</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {requirements.map((req) => (
-                    <RequirementRow key={req.id} requirement={req} />
-                  ))}
-                </TableBody>
-              </Table>
+              <RequirementTree
+                requirements={requirements}
+                onSelect={(req) => console.log('Select:', req)}
+                onExecute={(req) => console.log('Execute:', req)}
+                onViewTasks={(req) => console.log('View tasks:', req)}
+              />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="tasks">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>任务列表</CardTitle>
-                <CardDescription>开发任务与进度</CardDescription>
-              </div>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                新建任务
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[400px]">任务</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead>优先级</TableHead>
-                    <TableHead>负责人</TableHead>
-                    <TableHead>更新时间</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tasks.map((task) => (
-                    <TaskRow key={task.id} task={task} />
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+        <TabsContent value="execution">
+          <TaskExecutionPanel
+            tasks={tasks}
+            projectId={id || ''}
+            onExecute={handleExecuteTasks}
+            onRefresh={handleRefresh}
+          />
+        </TabsContent>
+
+        <TabsContent value="report">
+          <ReportViewer
+            report={report}
+            loading={reportLoading}
+            onRegenerate={handleGenerateReport}
+          />
         </TabsContent>
       </Tabs>
     </div>
   )
 }
+
+// Need Plus import
+import { Plus } from 'lucide-react'

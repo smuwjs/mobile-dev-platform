@@ -1,4 +1,2 @@
-export { ExecutionControlPanel } from './ExecutionControlPanel'
-export { RealtimeLogViewer } from './RealtimeLogViewer'
-export { TaskProgress, ProgressBar } from './TaskProgress'
-export { AlertDisplay } from './AlertDisplay'
+export { TaskExecutionPanel } from './TaskExecutionPanel'
+export { ReportViewer } from './ReportViewer'

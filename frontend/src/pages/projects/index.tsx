@@ -51,10 +51,12 @@ import type { Project } from '@/types'
 const mockProjects: Project[] = [
   {
     id: '1',
-    name: '电商 App v2.0',
-    description: '全新设计的电商移动应用',
+    name: '抖音Android',
+    description: '抖音Android客户端开发',
     platform: 'android',
-  status: 'in_progress',
+    spec_framework: 'openspec',
+    local_path: '/workspace/douyin-android',
+    status: 'in_progress',
     created_at: '2024-01-15T08:00:00Z',
     updated_at: '2024-03-18T10:30:00Z',
     member_count: 5,
@@ -63,10 +65,12 @@ const mockProjects: Project[] = [
   },
   {
     id: '2',
-    name: '社交 App',
-    description: '新一代社交平台应用',
-    platform: 'android',
-  status: 'in_progress',
+    name: '头条iOS',
+    description: '头条iOS客户端开发',
+    platform: 'ios',
+    spec_framework: 'openspec',
+    local_path: '/workspace/toutiao-ios',
+    status: 'in_progress',
     created_at: '2024-02-01T08:00:00Z',
     updated_at: '2024-03-17T14:20:00Z',
     member_count: 8,
@@ -78,7 +82,21 @@ const mockProjects: Project[] = [
     name: '企业管理系统',
     description: '企业内部管理系统',
     platform: 'ios',
-  status: 'completed',
+    spec_framework: 'speckit',
+    status: 'in_progress',
+    created_at: '2024-02-01T08:00:00Z',
+    updated_at: '2024-03-17T14:20:00Z',
+    member_count: 8,
+    task_count: 32,
+    progress: 45,
+  },
+  {
+    id: '3',
+    name: '企业管理系统',
+    description: '企业内部管理系统',
+    platform: 'ios',
+    spec_framework: 'openspec',
+    status: 'completed',
     created_at: '2023-11-10T08:00:00Z',
     updated_at: '2024-03-15T16:00:00Z',
     member_count: 12,
@@ -90,7 +108,8 @@ const mockProjects: Project[] = [
     name: '在线教育平台',
     description: 'K12 在线教育应用',
     platform: 'cross',
-  status: 'planning',
+    spec_framework: 'superpowers',
+    status: 'planning',
     created_at: '2024-03-01T08:00:00Z',
     updated_at: '2024-03-16T09:00:00Z',
     member_count: 3,
@@ -119,16 +138,25 @@ function CreateProjectDialog() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [platform, setPlatform] = useState('android')
+  const [localPath, setLocalPath] = useState('')
+  const [specFramework, setSpecFramework] = useState('openspec')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     try {
-      const project = await createProject({ name, description, platform: platform as 'android' | 'ios' | 'harmony' | 'cross' })
+      const project = await createProject({
+        name,
+        description,
+        platform: platform as 'android' | 'ios' | 'harmony' | 'cross',
+        local_path: localPath || undefined,
+        spec_framework: specFramework as 'openspec' | 'speckit' | 'superpowers',
+      })
       setOpen(false)
       setName('')
       setDescription('')
+      setLocalPath('')
       navigate(`/projects/${project.id}`)
     } catch (error) {
       console.error('Failed to create project:', error)
@@ -145,7 +173,7 @@ function CreateProjectDialog() {
           新建项目
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>创建新项目</DialogTitle>
@@ -160,7 +188,7 @@ function CreateProjectDialog() {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="输入项目名称"
+                placeholder="例如: 抖音Android、头条iOS"
                 required
               />
             </div>
@@ -174,19 +202,46 @@ function CreateProjectDialog() {
                 rows={3}
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="platform">平台</Label>
+                <Select value={platform} onValueChange={setPlatform}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择平台" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="android">Android</SelectItem>
+                    <SelectItem value="ios">iOS</SelectItem>
+                    <SelectItem value="harmony">HarmonyOS</SelectItem>
+                    <SelectItem value="cross">跨平台</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="specFramework">规范框架</Label>
+                <Select value={specFramework} onValueChange={setSpecFramework}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择规范框架" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="openspec">OpenSpec</SelectItem>
+                    <SelectItem value="speckit">SpecKit</SelectItem>
+                    <SelectItem value="superpowers">SuperPowers</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="grid gap-2">
-              <Label htmlFor="platform">平台</Label>
-              <Select value={platform} onValueChange={setPlatform}>
-                <SelectTrigger>
-                  <SelectValue placeholder="选择平台" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="android">Android</SelectItem>
-                  <SelectItem value="ios">iOS</SelectItem>
-                  <SelectItem value="harmony">HarmonyOS</SelectItem>
-                  <SelectItem value="cross">跨平台</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="localPath">本地开发目录</Label>
+              <Input
+                id="localPath"
+                value={localPath}
+                onChange={(e) => setLocalPath(e.target.value)}
+                placeholder="/path/to/your/project"
+              />
+              <p className="text-xs text-muted-foreground">
+                Claude Code 将自动在此目录下创建和修改代码
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -201,6 +256,12 @@ function CreateProjectDialog() {
 }
 
 function ProjectRow({ project }: { project: Project }) {
+  const frameworkLabels: Record<string, string> = {
+    openspec: 'OpenSpec',
+    speckit: 'SpecKit',
+    superpowers: 'SuperPowers',
+  }
+
   return (
     <TableRow>
       <TableCell>
@@ -218,8 +279,21 @@ function ProjectRow({ project }: { project: Project }) {
             <p className="text-sm text-muted-foreground line-clamp-1">
               {project.description}
             </p>
+            {project.local_path && (
+              <p className="text-xs text-muted-foreground font-mono">
+                {project.local_path}
+              </p>
+            )}
           </div>
         </div>
+      </TableCell>
+      <TableCell>
+        <Badge variant="outline">{project.platform}</Badge>
+        {project.spec_framework && (
+          <Badge variant="secondary" className="ml-1">
+            {frameworkLabels[project.spec_framework] || project.spec_framework}
+          </Badge>
+        )}
       </TableCell>
       <TableCell>
         <Badge className={statusColors[project.status]} variant="secondary">
@@ -351,6 +425,7 @@ export default function ProjectsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[300px]">项目</TableHead>
+                <TableHead>平台/规范</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead>进度</TableHead>
                 <TableHead>成员</TableHead>

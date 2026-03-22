@@ -19,6 +19,12 @@ class ProjectBase(BaseModel):
     settings: dict[str, Any] | None = Field(None, description="Project settings")
     started_at: datetime | None = Field(None, description="Project start date")
     completed_at: datetime | None = Field(None, description="Project completion date")
+    # 本地开发目录
+    local_path: str | None = Field(None, max_length=500, description="Local development directory")
+    # 规范驱动框架
+    spec_framework: str = Field(default="openspec", max_length=50, description="Spec framework (openspec/speckit/superpowers)")
+    # 规范配置
+    spec_config: dict[str, Any] | None = Field(None, description="Spec framework configuration")
 
 
 class ProjectCreate(ProjectBase):

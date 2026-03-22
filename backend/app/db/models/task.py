@@ -103,6 +103,26 @@ class Task(Base, UUIDMixin, TimestampMixin):
         JSON,
         nullable=True,
     )
+    # Claude Code 会话ID
+    claude_session_id: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+    # Token 消耗统计
+    token_usage: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+    # 任务产物（代码文件路径等）
+    artifacts: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+    # 执行日志
+    execution_log: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
 
     # Relationships
     project: Mapped["Project"] = relationship(

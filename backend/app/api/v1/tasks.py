@@ -59,6 +59,11 @@ class TaskResponse(TaskBase):
     created_at: datetime
     started_at: datetime | None = None
     completed_at: datetime | None = None
+    # Claude Code 相关字段
+    claude_session_id: str | None = None
+    token_usage: dict | None = None
+    artifacts: dict | None = None
+    execution_log: dict | None = None
 
     class Config:
         from_attributes = True
@@ -85,6 +90,10 @@ def _task_to_response(task: dict) -> TaskResponse:
         created_at=task.get("created_at", datetime.now()),
         started_at=task.get("started_at"),
         completed_at=task.get("completed_at"),
+        claude_session_id=task.get("claude_session_id"),
+        token_usage=task.get("token_usage"),
+        artifacts=task.get("artifacts"),
+        execution_log=task.get("execution_log"),
     )
 
 

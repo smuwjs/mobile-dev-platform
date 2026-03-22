@@ -9,11 +9,16 @@ export interface Project {
   member_count: number
   task_count: number
   progress: number
+  // 新增字段
+  local_path?: string
+  spec_framework?: 'openspec' | 'speckit' | 'superpowers'
+  spec_config?: Record<string, any>
 }
 
 export interface Task {
   id: string
   project_id: string
+  requirement_id?: string
   title: string
   description: string
   status: 'pending' | 'running' | 'completed' | 'failed'
@@ -23,17 +28,34 @@ export interface Task {
   updated_at: string
   started_at?: string
   completed_at?: string
+  progress?: number
+  // 新增字段
+  claude_session_id?: string
+  token_usage?: {
+    input: number
+    output: number
+    total: number
+  }
+  artifacts?: Record<string, any>
+  execution_log?: {
+    output: string
+    error: string
+  }
 }
 
 export interface Requirement {
   id: string
   project_id: string
+  parent_id?: string
   title: string
   description: string
   status: 'draft' | 'active' | 'completed' | 'archived'
   priority: 'low' | 'medium' | 'high'
   created_at: string
   updated_at: string
+  // 树状结构支持
+  children?: Requirement[]
+  tasks?: Task[]
 }
 
 export interface CostRecord {
@@ -72,4 +94,44 @@ export interface User {
   id: string
   username: string
   email?: string
+}
+
+// 报告类型
+export interface ProjectReport {
+  project_id: string
+  requirement_id: string
+  generated_at: string
+  summary: string
+  total_tasks: number
+  completed_tasks: number
+  failed_tasks: number
+  total_token_usage: {
+    input: number
+    output: number
+    total: number
+  }
+  sections: {
+    title: string
+    content: string
+  }[]
+}
+
+// 规范框架
+export interface SpecFramework {
+  id: string
+  name: string
+  description: string
+  url: string
+}
+
+// 任务执行状态
+export interface ExecutionStatus {
+  task_id: string
+  status: string
+  progress: number
+  token_usage: {
+    input: number
+    output: number
+    total: number
+  }
 }
